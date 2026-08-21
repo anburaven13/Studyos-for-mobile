@@ -36,12 +36,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Sync Capacitor
-        run: npx cap sync android
-        
-
       - name: Make Gradle wrapper executable
         run: chmod +x ./android/gradlew
+        
+      - name: Sync Capacitor
+        run: npx cap sync android
         
       - name: Build Debug APK
         working-directory: ./android
