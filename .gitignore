@@ -29,6 +29,8 @@ dist-ssr
 # Hide AI-generated documentation artifacts
 *.md
 !README.md
+.opencode/
+opencode_skills/
 
 # Capacitor / Android
 android/app/build/
