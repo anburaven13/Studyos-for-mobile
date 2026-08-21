@@ -27,9 +27,6 @@ jobs:
       - name: Build Web Assets (Vite)
         run: npm run build
         
-      - name: Sync Capacitor
-        run: npx cap sync android
-        
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
@@ -38,6 +35,10 @@ jobs:
           
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+        
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./android/gradlew
