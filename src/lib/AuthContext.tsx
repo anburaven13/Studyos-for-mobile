@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiFetch } from './api';
 
 type User = {
   id: number;
@@ -23,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (token) {
-      fetch('/api/user/me', {
+      apiFetch('/api/user/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())

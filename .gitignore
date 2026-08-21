@@ -29,3 +29,8 @@ dist-ssr
 # Hide AI-generated documentation artifacts
 *.md
 !README.md
+
+# Capacitor / Android
+android/app/build/
+android/.gradle/
+*.apk

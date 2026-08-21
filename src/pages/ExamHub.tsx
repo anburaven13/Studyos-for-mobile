@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Plus, X, Trash, Upload, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { apiFetch } from '../lib/api';
 
 export default function ExamHub() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
@@ -14,7 +15,7 @@ export default function ExamHub() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/exams', {
+      const res = await apiFetch('/api/exams', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -103,7 +104,7 @@ export default function ExamHub() {
     if (!token) return;
 
     try {
-      const res = await fetch('/api/exams', {
+      const res = await apiFetch('/api/exams', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -136,7 +137,7 @@ export default function ExamHub() {
       reader.onloadend = async () => {
         const base64String = reader.result as string;
 
-        const res = await fetch('/api/exams/extract', {
+        const res = await apiFetch('/api/exams/extract', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -150,7 +151,7 @@ export default function ExamHub() {
           // For each extracted exam, create it
           for (const exam of extractedExams) {
             if (exam.name && exam.date) {
-              await fetch('/api/exams', {
+              await apiFetch('/api/exams', {
                 method: 'POST',
                 headers: { 
                   'Content-Type': 'application/json',

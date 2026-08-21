@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import { Sparkles, Loader2, Check, Trash } from 'lucide-react';
 import { simulateAiResponse, generateFlashcards } from '../lib/aiService';
+import { apiFetch } from '../lib/api';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -40,7 +41,7 @@ export default function Notes() {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await fetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await apiFetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           if (data.length > 0) {
@@ -124,7 +125,7 @@ export default function Notes() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/notes', {
+      const res = await apiFetch('/api/notes', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await fetch('/api/ai/quiz', {
+      const res = await apiFetch('/api/ai/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, userContext })
@@ -235,7 +236,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await fetch('/api/dna/compile', {
+      const res = await apiFetch('/api/dna/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, source_id: activeNote.id })

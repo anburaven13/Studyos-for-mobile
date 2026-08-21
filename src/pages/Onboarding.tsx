@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
+import { apiFetch } from '../lib/api';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -20,7 +21,7 @@ export default function Onboarding() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/user/onboarding', {
+      const res = await apiFetch('/api/user/onboarding', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

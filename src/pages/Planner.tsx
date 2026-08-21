@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Plus, X, Trash, RefreshCw } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 export default function Planner() {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes
@@ -15,7 +16,7 @@ export default function Planner() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/planner/merged', {
+      const res = await apiFetch('/api/planner/merged', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -55,7 +56,7 @@ export default function Planner() {
     if (!token) return;
 
     try {
-      const res = await fetch('/api/planner', {
+      const res = await apiFetch('/api/planner', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

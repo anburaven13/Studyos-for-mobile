@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { apiFetch } from '../lib/api';
 import { Plus, Check, Circle, Sparkles, Loader2, X, Trash } from 'lucide-react';
 import { simulateAiResponse } from '../lib/aiService';
 
@@ -23,7 +25,7 @@ export default function Homework() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/homework', {
+      const res = await apiFetch('/api/homework', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -81,7 +83,7 @@ export default function Homework() {
     if (!token) return;
 
     try {
-      const res = await fetch('/api/homework', {
+      const res = await apiFetch('/api/homework', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

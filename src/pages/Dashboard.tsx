@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Calendar, Clock, FileText, CheckCircle2, BarChart2 } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 interface Task {
   id: string;
@@ -48,10 +49,10 @@ export default function Dashboard() {
       
       try {
         const [examsRes, homeworkRes, plannerRes, analyticsRes] = await Promise.all([
-          fetch('/api/exams', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/homework', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/planner', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/analytics', { headers: { 'Authorization': `Bearer ${token}` } })
+          apiFetch('/api/exams', { headers: { 'Authorization': `Bearer ${token}` } }),
+          apiFetch('/api/homework', { headers: { 'Authorization': `Bearer ${token}` } }),
+          apiFetch('/api/planner', { headers: { 'Authorization': `Bearer ${token}` } }),
+          apiFetch('/api/analytics', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
         const exams = examsRes.ok ? await examsRes.json() : [];

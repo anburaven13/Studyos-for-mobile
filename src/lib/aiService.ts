@@ -1,3 +1,5 @@
+import { apiFetch } from './api';
+
 export type ProviderInfo = {
   provider: 'groq' | 'openrouter' | 'nvidia';
   apiKey?: string;
@@ -7,7 +9,7 @@ export type ProviderInfo = {
 export const simulateAiResponse = async (prompt: string, customSystemPrompt?: string, userContext?: string, providerInfo?: ProviderInfo) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/chat', {
+    const response = await apiFetch('/api/ai/chat', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -32,7 +34,7 @@ export const simulateAiResponse = async (prompt: string, customSystemPrompt?: st
 export const generateFlashcards = async (content: string, userContext?: string): Promise<{front: string, back: string}[]> => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/flashcards', {
+    const response = await apiFetch('/api/ai/flashcards', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -56,7 +58,7 @@ export const generateFlashcards = async (content: string, userContext?: string):
 export const extractRoutineFromData = async (rawData: string): Promise<{schedule: Record<string, any[]>} | null> => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/extract-routine', {
+    const response = await apiFetch('/api/ai/extract-routine', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

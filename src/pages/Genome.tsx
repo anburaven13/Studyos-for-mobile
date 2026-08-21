@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dna, Network, BrainCircuit, Activity, Search, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { apiFetch } from '../lib/api';
 
 interface ConceptGene {
   id: string;
@@ -27,7 +28,7 @@ export default function Genome() {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await fetch('/api/dna', {
+        const res = await apiFetch('/api/dna', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
