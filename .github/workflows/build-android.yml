@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           
       - name: Install Node Dependencies
@@ -38,9 +38,13 @@ jobs:
 
       - name: Make Gradle wrapper executable
         run: chmod +x ./android/gradlew
-        
-      - name: Sync Capacitor
-        run: npx cap sync android
+
+      - name: Copy web assets to Android
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          npx cap copy android
+          npx cap update android
         
       - name: Build Debug APK
         working-directory: ./android
