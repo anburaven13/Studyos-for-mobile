@@ -18,17 +18,23 @@ const groq = new Groq({
 
 const app = express();
 
+// Required when deploying to Vercel/proxies so rate limiters use the correct client IP
+app.set('trust proxy', 1);
+
 // CRIT-2: Strict JWT secret — no hardcoded fallbacks
 const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'studyos_dev_secret_change_me' : (() => { throw new Error('FATAL: JWT_SECRET environment variable is required in production'); })());
 
 // LOW-1: Security headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CRIT-1: Strict CORS — no wildcard in production
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://studyos-snowy.vercel.app',
   'capacitor://localhost',
   'http://localhost',
+  'https://localhost',
   'ionic://localhost'
 ];
 
@@ -40,7 +46,7 @@ app.use(cors({
 }));
 
 // MED-4: Reduce default body size limit
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '5mb' }));
 
 // HIGH-2: Global rate limiter
 app.use(rateLimit({
