@@ -113,7 +113,7 @@ export default function Planner() {
         
         {/* Pomodoro Timer */}
         <div className="lg:col-span-1">
-          <div className="border rounded-2xl bg-card shadow-sm p-8 text-center flex flex-col items-center">
+          <div className="glass-card border-none rounded-2xl p-8 text-center flex flex-col items-center">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">Focus Session</h2>
             
             <div className="text-6xl font-bold tracking-tighter tabular-nums mb-8">
@@ -136,7 +136,7 @@ export default function Planner() {
             </div>
           </div>
           
-          <div className="mt-8 border rounded-2xl bg-card shadow-sm p-6">
+          <div className="mt-8 glass-card border-none rounded-2xl p-6">
              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Attendance</h2>
              <div className="space-y-4">
                <div className="text-muted-foreground text-sm p-4 text-center border border-dashed rounded-xl">
@@ -148,7 +148,7 @@ export default function Planner() {
 
         {/* Timetable */}
         <div className="lg:col-span-2">
-          <div className="border rounded-2xl bg-card shadow-sm p-6 h-full">
+          <div className="glass-card border-none rounded-2xl p-6 h-full">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">Today's Timetable</h2>
             
             <div className="relative">

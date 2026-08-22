@@ -34,7 +34,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         />
       )}
       <div className={cn(
-        "w-64 border-r border-border/50 bg-white/70 dark:bg-black/70 backdrop-blur-xl backdrop-saturate-150 shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
+        "w-64 glass-panel h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         <div className="h-16 flex items-center px-6 border-b relative">

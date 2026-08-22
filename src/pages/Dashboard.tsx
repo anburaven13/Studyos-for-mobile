@@ -25,7 +25,7 @@ interface Stats {
 }
 
 const StatCard = ({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) => (
-  <div className="border rounded-2xl p-6 shadow-sm bg-card flex items-center space-x-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+  <div className="glass-card border-none rounded-2xl p-6 flex items-center space-x-4 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
     <div className="p-3 bg-primary/10 text-primary rounded-xl">
       <Icon className="w-6 h-6" />
     </div>
@@ -98,7 +98,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        <div className="lg:col-span-3 border rounded-2xl p-4 md:p-6 shadow-sm bg-card">
+        <div className="lg:col-span-3 glass-card border-none rounded-2xl p-4 md:p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="text-xl font-semibold flex items-center space-x-2">
               <BarChart2 className="w-5 h-5 text-primary" />
@@ -134,7 +134,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="border rounded-2xl p-6 shadow-sm bg-card">
+        <div className="glass-card border-none rounded-2xl p-6">
           <h2 className="text-xl font-semibold mb-6">Today's Schedule</h2>
           <div className="space-y-4">
             {schedule.length === 0 ? (
@@ -154,7 +154,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        <div className="border rounded-2xl p-6 shadow-sm bg-card">
+        <div className="glass-card border-none rounded-2xl p-6">
           <h2 className="text-xl font-semibold mb-6">Pending Tasks</h2>
           <div className="space-y-4">
             {tasks.length === 0 ? (
