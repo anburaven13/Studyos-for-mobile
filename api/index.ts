@@ -25,9 +25,16 @@ const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'producti
 app.use(helmet());
 
 // CRIT-1: Strict CORS — no wildcard in production
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'https://studyos-snowy.vercel.app',
+  'capacitor://localhost',
+  'http://localhost',
+  'ionic://localhost'
+];
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? (process.env.FRONTEND_URL || 'https://studyos-snowy.vercel.app')
+    ? allowedOrigins
     : '*',
   credentials: true,
 }));
