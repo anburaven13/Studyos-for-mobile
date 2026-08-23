@@ -3,7 +3,7 @@ import { Upload, FileText, Bot, User, Send, Loader2 } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { simulateAiResponse } from '../lib/aiService';
+import { simulateAiResponse, extractTextFromImage } from '../lib/aiService';
 import { cn } from '../lib/utils';
 
 // Set up pdfjs worker (use local copy or unpkg)
@@ -53,7 +53,28 @@ export default function Workspace() {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\\n';
+        fullText += pageText + '\n';
+      }
+
+      // If text is suspiciously short (e.g. scanned PDF), fallback to Vision OCR for first 3 pages
+      if (fullText.trim().length < 200) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `This looks like a scanned document. Running Vision OCR...` }]);
+        fullText = '';
+        const numPagesToProcess = Math.min(3, pdf.numPages);
+        for (let i = 1; i <= numPagesToProcess; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          if (context) {
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            await page.render({ canvasContext: context, viewport } as any).promise;
+            const base64 = canvas.toDataURL('image/jpeg');
+            const extracted = await extractTextFromImage(base64);
+            fullText += `--- Page ${i} ---\n${extracted}\n\n`;
+          }
+        }
       }
       
       setPdfText(fullText);

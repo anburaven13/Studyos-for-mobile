@@ -668,6 +668,37 @@ app.post('/api/study_sessions', authenticateToken, async (req: any, res: any) =>
 });
 
 // --- AI Routes ---
+
+const aiVisionSchema = z.object({
+  imageBase64: z.string().min(1)
+});
+
+app.post('/api/ai/vision', authenticateToken, aiLimiter, async (req: any, res: any) => {
+  try {
+    const parsed = aiVisionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
+    const { imageBase64 } = parsed.data;
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Extract all text from this image precisely. If there are diagrams, describe them. Do not add conversational filler.' },
+            { type: 'image_url', image_url: { url: imageBase64 } }
+          ]
+        }
+      ],
+      model: 'qwen/qwen3.6-27b',
+      temperature: 0.2,
+    });
+
+    res.json({ result: chatCompletion.choices[0]?.message?.content || 'No text extracted.' });
+  } catch (error: any) {
+    console.error('AI Vision Error:', error);
+    res.status(500).json({ error: 'Failed to extract text from image.' });
+  }
+});
 app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any) => {
   try {
     // MED-6 + HIGH-1: Validate and limit prompt size

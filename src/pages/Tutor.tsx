@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, Settings } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { simulateAiResponse } from '../lib/aiService';
+import * as pdfjsLib from 'pdfjs-dist';
+import { simulateAiResponse, extractTextFromImage } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
+
+// Set up pdfjs worker (use local copy or unpkg)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type Message = {
   id: string;
@@ -21,7 +25,9 @@ export default function Tutor() {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -39,6 +45,61 @@ export default function Tutor() {
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsParsing(true);
+    try {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = reader.result as string;
+          const extractedText = await extractTextFromImage(base64);
+          setInput(prev => prev + `\n[Image Context: ${extractedText}]\n`);
+          setIsParsing(false);
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type === 'application/pdf') {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+
+        if (fullText.trim().length < 200) {
+          fullText = '';
+          const numPagesToProcess = Math.min(3, pdf.numPages);
+          for (let i = 1; i <= numPagesToProcess; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (context) {
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+              await page.render({ canvasContext: context, viewport } as any).promise;
+              const base64 = canvas.toDataURL('image/jpeg');
+              const extracted = await extractTextFromImage(base64);
+              fullText += `--- Page ${i} ---\n${extracted}\n\n`;
+            }
+          }
+        }
+        setInput(prev => prev + `\n[PDF Context from ${file.name}:\n${fullText}]\n`);
+        setIsParsing(false);
+      }
+    } catch (error) {
+      console.error('Upload Error:', error);
+      alert('Failed to process file.');
+      setIsParsing(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -150,6 +211,21 @@ export default function Tutor() {
           <div ref={endOfMessagesRef} />
         </div>
         <div className="p-4 border-t bg-background flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <input 
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="p-3 bg-muted hover:bg-muted-foreground/10 text-muted-foreground rounded-xl transition-colors flex-shrink-0 flex items-center justify-center"
+            title="Upload Image or PDF"
+            disabled={isParsing}
+          >
+            {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+          </button>
           <input 
             type="text"
             className="flex-1 bg-muted/50 border border-transparent focus:border-border rounded-xl px-4 py-3 outline-none text-sm transition-colors"
