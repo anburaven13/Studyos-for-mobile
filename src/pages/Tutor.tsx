@@ -16,9 +16,15 @@ export default function Tutor() {
   const { user } = useAuth();
   const userContext = user?.class_level && user?.board ? `${user.class_level} - ${user.board}` : undefined;
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('tutor_messages_mobile');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
+    ];
+  });
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -41,6 +47,11 @@ export default function Tutor() {
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Save messages to localStorage
+  useEffect(() => {
+    localStorage.setItem('tutor_messages_mobile', JSON.stringify(messages));
+  }, [messages]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
