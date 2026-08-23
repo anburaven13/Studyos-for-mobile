@@ -1,13 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, Bot, User, Send, Loader2 } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { simulateAiResponse, extractTextFromImage } from '../lib/aiService';
+import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
-
-// Set up pdfjs worker (use local copy or unpkg)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type Message = { id: string; role: 'user' | 'ai'; content: string; };
 
@@ -42,47 +38,20 @@ export default function Workspace() {
     const objectUrl = URL.createObjectURL(file);
     setPdfUrl(objectUrl);
     
-    // Parse PDF text
     setIsParsing(true);
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = '';
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        fullText += pageText + '\n';
-      }
-
-      // If text is suspiciously short (e.g. scanned PDF), fallback to Vision OCR for first 3 pages
-      if (fullText.trim().length < 200) {
-        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `This looks like a scanned document. Running Vision OCR...` }]);
-        fullText = '';
-        const numPagesToProcess = Math.min(3, pdf.numPages);
-        for (let i = 1; i <= numPagesToProcess; i++) {
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1.5 });
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          if (context) {
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            await page.render({ canvasContext: context, viewport } as any).promise;
-            const base64 = canvas.toDataURL('image/jpeg');
-            const extracted = await extractTextFromImage(base64);
-            fullText += `--- Page ${i} ---\n${extracted}\n\n`;
-          }
-        }
-      }
-      
-      setPdfText(fullText);
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `I've finished reading "${file.name}". What would you like to know about it?` }]);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        const extractedText = await extractTextFromDocument(base64, file.type);
+        setPdfText(extractedText);
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `I've finished reading "${file.name}". What would you like to know about it?` }]);
+        setIsParsing(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error parsing PDF:', error);
       alert('Failed to parse PDF text.');
-    } finally {
       setIsParsing(false);
     }
   };

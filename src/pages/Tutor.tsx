@@ -2,13 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import * as pdfjsLib from 'pdfjs-dist';
-import { simulateAiResponse, extractTextFromImage } from '../lib/aiService';
+import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
-
-// Set up pdfjs worker (use local copy or unpkg)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 type Message = {
   id: string;
@@ -52,48 +48,15 @@ export default function Tutor() {
 
     setIsParsing(true);
     try {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64 = reader.result as string;
-          const extractedText = await extractTextFromImage(base64);
-          setInput(prev => prev + `\n[Image Context: ${extractedText}]\n`);
-          setIsParsing(false);
-        };
-        reader.readAsDataURL(file);
-      } else if (file.type === 'application/pdf') {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item: any) => item.str).join(' ');
-          fullText += pageText + '\n';
-        }
-
-        if (fullText.trim().length < 200) {
-          fullText = '';
-          const numPagesToProcess = Math.min(3, pdf.numPages);
-          for (let i = 1; i <= numPagesToProcess; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            if (context) {
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              await page.render({ canvasContext: context, viewport } as any).promise;
-              const base64 = canvas.toDataURL('image/jpeg');
-              const extracted = await extractTextFromImage(base64);
-              fullText += `--- Page ${i} ---\n${extracted}\n\n`;
-            }
-          }
-        }
-        setInput(prev => prev + `\n[PDF Context from ${file.name}:\n${fullText}]\n`);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        const extractedText = await extractTextFromDocument(base64, file.type);
+        const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : 'Document';
+        setInput(prev => prev + `\n[${fileTypeLabel} Context from ${file.name}:\n${extractedText}]\n`);
         setIsParsing(false);
-      }
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Upload Error:', error);
       alert('Failed to process file.');

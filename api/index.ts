@@ -8,12 +8,17 @@ import Groq from 'groq-sdk';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
 // --- Security: Strict API key loading ---
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || (() => { console.warn('WARNING: GROQ_API_KEY not set'); return 'MISSING_KEY'; })()
+});
+
+const geminiAi = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || (() => { console.warn('WARNING: GEMINI_API_KEY not set'); return 'MISSING_KEY'; })()
 });
 
 const app = express();
@@ -899,6 +904,31 @@ app.post('/api/ai/quiz', authenticateToken, aiLimiter, async (req: any, res: any
   } catch (error) {
     console.error("Groq API Error during quiz generation:", error);
     res.status(500).json({ error: 'Failed to generate quiz' });
+  }
+});
+
+app.post('/api/ai/gemini-vision', authenticateToken, aiLimiter, async (req: any, res: any) => {
+  try {
+    const { base64Data, mimeType } = req.body;
+    if (!base64Data || !mimeType) {
+      return res.status(400).json({ error: 'Base64 data and MIME type are required' });
+    }
+
+    const response = await geminiAi.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+            { role: 'user', parts: [
+                { text: "Extract all the text from this document or image accurately. Maintain formatting if possible. If there are math equations, transcribe them correctly. If it's an image without text, describe it." },
+                { inlineData: { data: base64Data.replace(/^data:.*?;base64,/, ''), mimeType: mimeType } }
+            ]}
+        ]
+    });
+
+    const result = response.text || 'No text could be extracted.';
+    res.json({ result });
+  } catch (error: any) {
+    console.error("Gemini Vision API Error:", error);
+    res.status(500).json({ error: 'Failed to process document/image' });
   }
 });
 

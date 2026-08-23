@@ -39,28 +39,28 @@ export const simulateAiResponse = async (prompt: string | any[], customSystemPro
   }
 };
 
-export const extractTextFromImage = async (imageBase64: string): Promise<string> => {
+export const extractTextFromDocument = async (base64Data: string, mimeType: string): Promise<string> => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch('/api/ai/vision', {
+    const response = await fetch('/api/ai/gemini-vision', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ imageBase64 })
+      body: JSON.stringify({ base64Data, mimeType })
     });
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to extract text from image');
+      throw new Error(errorData.error || 'Failed to extract text from document');
     }
     
     const data = await response.json();
     return data.result;
   } catch (error: any) {
-    console.error('Vision API Error:', error);
-    return `[Error] Failed to read image: ${error.message}`;
+    console.error('Gemini API Error:', error);
+    return `[Error] Failed to read document: ${error.message}`;
   }
 };
 

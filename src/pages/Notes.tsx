@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import { Sparkles, Loader2, Check, Trash } from 'lucide-react';
-import { simulateAiResponse, generateFlashcards } from '../lib/aiService';
+import { simulateAiResponse, generateFlashcards, extractTextFromDocument } from '../lib/aiService';
 import { apiFetch } from '../lib/api';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type Note = { id: string; title: string; content: string; folder?: string; tags?: any; };
 
@@ -260,23 +256,24 @@ export default function Notes() {
     if (!file) return;
 
     try {
-      setSummary('Extracting text from PDF...');
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument(arrayBuffer as any).promise;
-      let extractedText = `\n\n--- Imported from ${file.name} ---\n\n`;
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item: any) => item.str).join(' ');
-        extractedText += pageText + '\n\n';
-      }
-
-      updateActiveNoteContent(activeNote.content + extractedText);
-      setSummary('PDF text successfully extracted and appended to your note.');
+      setSummary('Extracting text from document...');
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+            const base64 = reader.result as string;
+            const extracted = await extractTextFromDocument(base64, file.type);
+            const extractedText = `\n\n--- Imported from ${file.name} ---\n\n${extracted}\n\n`;
+            updateActiveNoteContent(activeNote.content + extractedText);
+            setSummary('Document text successfully extracted and appended to your note.');
+        } catch (err) {
+            console.error(err);
+            setSummary('Failed to extract text from document.');
+        }
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
-      setSummary('Failed to extract text from PDF.');
+      setSummary('Failed to process document.');
     }
     
     if (fileInputRef.current) fileInputRef.current.value = '';
