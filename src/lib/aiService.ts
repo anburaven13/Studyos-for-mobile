@@ -73,7 +73,7 @@ export const extractTextFromDocument = async (file: File): Promise<string> => {
           imagesBatch.push({ base64Data: base64, mimeType: 'image/jpeg' });
         }
 
-        const response = await fetch('/api/ai/gemini-vision', {
+        const response = await apiFetch('/api/ai/gemini-vision', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export const extractTextFromDocument = async (file: File): Promise<string> => {
         reader.readAsDataURL(file);
       });
       
-      const response = await fetch('/api/ai/gemini-vision', {
+      const response = await apiFetch('/api/ai/gemini-vision', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
