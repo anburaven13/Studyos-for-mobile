@@ -915,7 +915,7 @@ app.post('/api/ai/gemini-vision', authenticateToken, aiLimiter, async (req: any,
     }
 
     const response = await geminiAi.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-pro',
         contents: [
             { role: 'user', parts: [
                 { text: "Extract all the text from this document or image accurately. Maintain formatting if possible. If there are math equations, transcribe them correctly. If it's an image without text, describe it." },
