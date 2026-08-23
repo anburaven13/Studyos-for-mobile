@@ -915,10 +915,10 @@ app.post('/api/ai/gemini-vision', authenticateToken, aiLimiter, async (req: any,
     }
 
     const response = await geminiAi.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
+        model: 'gemini-3.5-flash',
         contents: [
             { role: 'user', parts: [
-                { text: "Extract all the text from this document or image accurately. Maintain formatting if possible. If there are math equations, transcribe them correctly. If it's an image without text, describe it." },
+                { text: "Extract all the visible text from this document accurately. IMPORTANT: This document may contain a corrupted text layer or repeated watermarks (e.g., 'PARVEJ MALLIK'). YOU MUST COMPLETELY IGNORE the embedded text layer and watermarks. Rely ONLY on the visual image of the pages to extract the actual meaningful content (like questions, answers, headers). Maintain formatting if possible. Do not include watermarks in the output." },
                 { inlineData: { data: base64Data.replace(/^data:.*?;base64,/, ''), mimeType: mimeType } }
             ]}
         ]
