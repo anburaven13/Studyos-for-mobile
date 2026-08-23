@@ -113,15 +113,15 @@ const plannerSchema = z.object({
 });
 
 const aiChatSchema = z.object({
-  prompt: z.string().min(1).max(8000).optional(),
+  prompt: z.string().min(1).optional(),
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant', 'system', 'tool', 'ai']),
     content: z.string().nullable().optional(),
     tool_calls: z.any().optional(),
     tool_call_id: z.string().optional(),
   })).optional(),
-  customSystemPrompt: z.string().max(4000).optional(),
-  userContext: z.string().max(500).optional(),
+  customSystemPrompt: z.string().optional(),
+  userContext: z.string().optional(),
   providerInfo: z.object({
     provider: z.enum(['groq', 'openrouter', 'nvidia']),
     apiKey: z.string().max(256).optional(),
