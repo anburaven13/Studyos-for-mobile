@@ -108,7 +108,13 @@ const plannerSchema = z.object({
 });
 
 const aiChatSchema = z.object({
-  prompt: z.string().min(1).max(8000),
+  prompt: z.string().min(1).max(8000).optional(),
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system', 'tool', 'ai']),
+    content: z.string().nullable().optional(),
+    tool_calls: z.any().optional(),
+    tool_call_id: z.string().optional(),
+  })).optional(),
   customSystemPrompt: z.string().max(4000).optional(),
   userContext: z.string().max(500).optional(),
   providerInfo: z.object({
@@ -116,6 +122,8 @@ const aiChatSchema = z.object({
     apiKey: z.string().max(256).optional(),
     model: z.string().max(128).optional(),
   }).optional(),
+}).refine(data => data.prompt || data.messages, {
+  message: "Either prompt or messages must be provided"
 });
 
 // Initialize DB schema on cold start
@@ -698,17 +706,112 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
     }
 
     // Default Groq
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        { role: 'system', content: fullSystemPrompt },
-        { role: 'user', content: prompt }
-      ],
+    let apiMessages: any[] = [{ role: 'system', content: fullSystemPrompt }];
+    if (parsed.data.messages && parsed.data.messages.length > 0) {
+      apiMessages = apiMessages.concat(parsed.data.messages.map((m: any) => ({
+        role: m.role === 'ai' ? 'assistant' : m.role,
+        content: m.content || "",
+      })));
+    } else if (prompt) {
+      apiMessages.push({ role: 'user', content: prompt });
+    }
+
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "create_note",
+          description: "Creates a new study note in the user's workspace",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Title of the note" },
+              content: { type: "string", description: "Content of the note" },
+              folder: { type: "string", description: "Folder name" },
+              tags: { type: "array", items: { type: "string" } }
+            },
+            required: ["title", "content"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_homework",
+          description: "Adds a homework assignment to the user's list",
+          parameters: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Task description" },
+              subject: { type: "string", description: "Subject name" },
+              due_date: { type: "string", description: "YYYY-MM-DD format" }
+            },
+            required: ["title", "subject", "due_date"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "create_planner_event",
+          description: "Adds an event to the user's planner/schedule",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Name of the event" },
+              start_time: { type: "string", description: "HH:MM format in 24hr time" },
+              end_time: { type: "string", description: "HH:MM format in 24hr time" }
+            },
+            required: ["name", "start_time", "end_time"]
+          }
+        }
+      }
+    ];
+
+    let chatCompletion = await groq.chat.completions.create({
+      messages: apiMessages,
       model: 'openai/gpt-oss-120b',
       temperature: 0.5,
-      max_tokens: 1024,
+      tools: tools as any,
+      tool_choice: "auto",
     });
 
-    res.json({ result: chatCompletion.choices[0]?.message?.content || 'No response generated.' });
+    let responseMessage = chatCompletion.choices[0]?.message;
+
+    if (responseMessage?.tool_calls) {
+      apiMessages.push(responseMessage);
+      
+      for (const toolCall of responseMessage.tool_calls) {
+        try {
+          if (toolCall.function.name === 'create_note') {
+            const args = JSON.parse(toolCall.function.arguments);
+            await sql`INSERT INTO notes (user_id, title, content, folder, tags) VALUES (${req.user.userId}, ${args.title}, ${args.content}, ${args.folder || 'General'}, ${JSON.stringify(args.tags || [])})`;
+            apiMessages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: "Note created successfully." });
+          } else if (toolCall.function.name === 'create_homework') {
+            const args = JSON.parse(toolCall.function.arguments);
+            await sql`INSERT INTO homework (user_id, title, subject, due_date) VALUES (${req.user.userId}, ${args.title}, ${args.subject}, ${args.due_date})`;
+            apiMessages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: "Homework added successfully." });
+          } else if (toolCall.function.name === 'create_planner_event') {
+            const args = JSON.parse(toolCall.function.arguments);
+            await sql`INSERT INTO planner_events (user_id, name, start_time, end_time, source) VALUES (${req.user.userId}, ${args.name}, ${args.start_time}, ${args.end_time}, 'ai')`;
+            apiMessages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: "Planner event added successfully." });
+          } else {
+            apiMessages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: "Unknown tool." });
+          }
+        } catch (e: any) {
+          apiMessages.push({ tool_call_id: toolCall.id, role: "tool", name: toolCall.function.name, content: "Error executing tool: " + e.message });
+        }
+      }
+      
+      chatCompletion = await groq.chat.completions.create({
+        messages: apiMessages,
+        model: 'openai/gpt-oss-120b',
+        temperature: 0.5,
+      });
+      responseMessage = chatCompletion.choices[0]?.message;
+    }
+
+    res.json({ result: responseMessage?.content || 'No response generated.' });
   } catch (error: any) {
     // HIGH-4: Don't leak internal error details to client
     console.error('AI Chat Error:', error);

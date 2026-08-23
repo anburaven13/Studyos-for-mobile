@@ -70,13 +70,14 @@ export default function Workspace() {
     if (!input.trim()) return;
 
     const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
     setIsTyping(true);
 
     const systemPrompt = `You are an AI assistant that answers questions based on a provided document. Use the document context below to answer accurately. If the answer is not in the document, say so.\n\nDOCUMENT CONTEXT:\n${pdfText}`;
     
-    const aiResponseContent = await simulateAiResponse(userMessage.content, systemPrompt);
+    const aiResponseContent = await simulateAiResponse(newMessages, systemPrompt);
     const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: aiResponseContent };
     
     setMessages(prev => [...prev, aiMessage]);

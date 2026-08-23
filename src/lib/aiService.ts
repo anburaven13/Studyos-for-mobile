@@ -6,16 +6,24 @@ export type ProviderInfo = {
   model?: string;
 };
 
-export const simulateAiResponse = async (prompt: string, customSystemPrompt?: string, userContext?: string, providerInfo?: ProviderInfo) => {
+export const simulateAiResponse = async (prompt: string | any[], customSystemPrompt?: string, userContext?: string, providerInfo?: ProviderInfo) => {
   try {
     const token = localStorage.getItem('token');
+    
+    const body: any = { customSystemPrompt, userContext, providerInfo };
+    if (typeof prompt === 'string') {
+      body.prompt = prompt;
+    } else {
+      body.messages = prompt;
+    }
+
     const response = await apiFetch('/api/ai/chat', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ prompt, customSystemPrompt, userContext, providerInfo })
+      body: JSON.stringify(body)
     });
     
     if (!response.ok) {
