@@ -40,15 +40,10 @@ export default function Workspace() {
     
     setIsParsing(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        const extractedText = await extractTextFromDocument(base64, file.type);
-        setPdfText(extractedText);
-        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `I've finished reading "${file.name}". What would you like to know about it?` }]);
-        setIsParsing(false);
-      };
-      reader.readAsDataURL(file);
+      const extractedText = await extractTextFromDocument(file);
+      setPdfText(extractedText);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: `I've finished reading "${file.name}". What would you like to know about it?` }]);
+      setIsParsing(false);
     } catch (error) {
       console.error('Error parsing PDF:', error);
       alert('Failed to parse PDF text.');

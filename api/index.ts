@@ -909,18 +909,30 @@ app.post('/api/ai/quiz', authenticateToken, aiLimiter, async (req: any, res: any
 
 app.post('/api/ai/gemini-vision', authenticateToken, aiLimiter, async (req: any, res: any) => {
   try {
-    const { base64Data, mimeType } = req.body;
-    if (!base64Data || !mimeType) {
-      return res.status(400).json({ error: 'Base64 data and MIME type are required' });
+    const { images } = req.body;
+    if (!images || !Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ error: 'Images array is required' });
+    }
+
+    const parts: any[] = [
+      { text: "Extract all the visible text from this document accurately. IMPORTANT: This document may contain a corrupted text layer or repeated watermarks (e.g., 'PARVEJ MALLIK'). YOU MUST COMPLETELY IGNORE the embedded text layer and watermarks. Rely ONLY on the visual image of the pages to extract the actual meaningful content (like questions, answers, headers). Maintain formatting if possible. Do not include watermarks in the output." }
+    ];
+
+    for (const img of images) {
+      if (img.base64Data && img.mimeType) {
+        parts.push({
+          inlineData: {
+            data: img.base64Data.replace(/^data:.*?;base64,/, ''),
+            mimeType: img.mimeType
+          }
+        });
+      }
     }
 
     const response = await geminiAi.models.generateContent({
         model: 'gemini-3.5-flash',
         contents: [
-            { role: 'user', parts: [
-                { text: "Extract all the visible text from this document accurately. IMPORTANT: This document may contain a corrupted text layer or repeated watermarks (e.g., 'PARVEJ MALLIK'). YOU MUST COMPLETELY IGNORE the embedded text layer and watermarks. Rely ONLY on the visual image of the pages to extract the actual meaningful content (like questions, answers, headers). Maintain formatting if possible. Do not include watermarks in the output." },
-                { inlineData: { data: base64Data.replace(/^data:.*?;base64,/, ''), mimeType: mimeType } }
-            ]}
+            { role: 'user', parts: parts }
         ]
     });
 

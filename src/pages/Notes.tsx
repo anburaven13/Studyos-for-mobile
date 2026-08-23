@@ -257,20 +257,10 @@ export default function Notes() {
 
     try {
       setSummary('Extracting text from document...');
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-            const base64 = reader.result as string;
-            const extracted = await extractTextFromDocument(base64, file.type);
-            const extractedText = `\n\n--- Imported from ${file.name} ---\n\n${extracted}\n\n`;
-            updateActiveNoteContent(activeNote.content + extractedText);
-            setSummary('Document text successfully extracted and appended to your note.');
-        } catch (err) {
-            console.error(err);
-            setSummary('Failed to extract text from document.');
-        }
-      };
-      reader.readAsDataURL(file);
+      const extracted = await extractTextFromDocument(file);
+      const extractedText = `\n\n--- Imported from ${file.name} ---\n\n${extracted}\n\n`;
+      updateActiveNoteContent(activeNote.content + extractedText);
+      setSummary('Document text successfully extracted and appended to your note.');
     } catch (err) {
       console.error(err);
       setSummary('Failed to process document.');

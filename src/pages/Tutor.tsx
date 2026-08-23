@@ -48,15 +48,17 @@ export default function Tutor() {
 
     setIsParsing(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        const extractedText = await extractTextFromDocument(base64, file.type);
-        const fileTypeLabel = file.type.startsWith('image/') ? 'Image' : 'Document';
-        setInput(prev => prev + `\n[${fileTypeLabel} Context from ${file.name}:\n${extractedText}]\n`);
-        setIsParsing(false);
-      };
-      reader.readAsDataURL(file);
+      const extractedText = await extractTextFromDocument(file);
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        role: 'user', 
+        content: `[Document Context from ${file.name}: ${extractedText.substring(0, 50)}...]`
+      }, {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: `I've finished reading "${file.name}". What would you like me to help you with regarding this document?`
+      }]);
+      setIsParsing(false);
     } catch (error) {
       console.error('Upload Error:', error);
       alert('Failed to process file.');
