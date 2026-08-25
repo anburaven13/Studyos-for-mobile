@@ -13,8 +13,9 @@ import { GoogleGenAI } from '@google/genai';
 dotenv.config();
 
 // --- Security: Strict API key loading ---
+const groqApiKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || (() => { console.warn('WARNING: GROQ_API_KEY not set'); return 'MISSING_KEY'; })()
+  apiKey: groqApiKey || (() => { console.warn('WARNING: GROQ_API_KEY not set'); return 'MISSING_KEY'; })()
 });
 
 const geminiAi = new GoogleGenAI({
@@ -716,6 +717,17 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
       ? `${baseSystemPrompt}\n\nIf the user asks an educational or study-related question, consider that they are a student in: ${userContext}.`
       : baseSystemPrompt;
 
+    let apiMessages: any[] = [{ role: 'system', content: fullSystemPrompt }];
+    if (parsed.data.messages && parsed.data.messages.length > 0) {
+      const recentMessages = parsed.data.messages.slice(-20);
+      apiMessages = apiMessages.concat(recentMessages.map((m: any) => ({
+        role: m.role === 'ai' ? 'assistant' : m.role,
+        content: (m.content || "").slice(0, 12000),
+      })));
+    } else if (prompt) {
+      apiMessages.push({ role: 'user', content: prompt });
+    }
+
     if (providerInfo && providerInfo.provider === 'nvidia') {
       const apiKey = providerInfo.apiKey;
       const model = providerInfo.model || 'nvidia/nemotron-4-340b-instruct';
@@ -729,10 +741,7 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
         },
         body: JSON.stringify({
           model: model,
-          messages: [
-            { role: 'system', content: fullSystemPrompt },
-            { role: 'user', content: prompt }
-          ]
+          messages: apiMessages
         })
       });
 
@@ -742,16 +751,6 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
     }
 
     // Default Groq
-    let apiMessages: any[] = [{ role: 'system', content: fullSystemPrompt }];
-    if (parsed.data.messages && parsed.data.messages.length > 0) {
-      apiMessages = apiMessages.concat(parsed.data.messages.map((m: any) => ({
-        role: m.role === 'ai' ? 'assistant' : m.role,
-        content: m.content || "",
-      })));
-    } else if (prompt) {
-      apiMessages.push({ role: 'user', content: prompt });
-    }
-
     const tools = [
       {
         type: "function",
@@ -843,6 +842,7 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
         messages: apiMessages,
         model: 'openai/gpt-oss-120b',
         temperature: 0.5,
+        tools: tools as any,
       });
       responseMessage = chatCompletion.choices[0]?.message;
     }
