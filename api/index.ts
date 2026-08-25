@@ -722,7 +722,7 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
       const recentMessages = parsed.data.messages.slice(-20);
       apiMessages = apiMessages.concat(recentMessages.map((m: any) => ({
         role: m.role === 'ai' ? 'assistant' : m.role,
-        content: (m.content || "").slice(0, 12000),
+        content: (m.content || "").slice(0, 6000), // Reduced to 6000 to avoid Groq 8000 TPM limit
       })));
     } else if (prompt) {
       apiMessages.push({ role: 'user', content: prompt });
