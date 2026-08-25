@@ -720,10 +720,29 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
     let apiMessages: any[] = [{ role: 'system', content: fullSystemPrompt }];
     if (parsed.data.messages && parsed.data.messages.length > 0) {
       const recentMessages = parsed.data.messages.slice(-20);
-      apiMessages = apiMessages.concat(recentMessages.map((m: any) => ({
-        role: m.role === 'ai' ? 'assistant' : m.role,
-        content: (m.content || "").slice(0, 6000), // Reduced to 6000 to avoid Groq 8000 TPM limit
-      })));
+      let totalChars = 0;
+      const MAX_TOTAL_CHARS = 10000;
+      const keptMessages = [];
+      for (let i = recentMessages.length - 1; i >= 0; i--) {
+        const m = recentMessages[i];
+        const contentStr = m.content || "";
+        if (totalChars + contentStr.length > MAX_TOTAL_CHARS) {
+          const remaining = MAX_TOTAL_CHARS - totalChars;
+          if (remaining > 0) {
+            keptMessages.unshift({
+              role: m.role === 'ai' ? 'assistant' : m.role,
+              content: contentStr.slice(-remaining)
+            });
+          }
+          break;
+        }
+        keptMessages.unshift({
+          role: m.role === 'ai' ? 'assistant' : m.role,
+          content: contentStr
+        });
+        totalChars += contentStr.length;
+      }
+      apiMessages = apiMessages.concat(keptMessages);
     } else if (prompt) {
       apiMessages.push({ role: 'user', content: prompt });
     }
