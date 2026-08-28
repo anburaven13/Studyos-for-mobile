@@ -4,7 +4,11 @@ import { useAuth } from '../../lib/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute() {
-  const { user, token } = useAuth();
+  const { user, token, requires2FA } = useAuth();
+
+  if (requires2FA) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (token && user === null) {
     return (

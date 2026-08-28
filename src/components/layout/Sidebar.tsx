@@ -5,15 +5,15 @@ import { cn } from '../../lib/utils';
 import { useAuth } from '../../lib/AuthContext';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
-  { icon: BookOpen, label: 'Notes', to: '/notes' },
-  { icon: Dna, label: 'Knowledge DNA', to: '/genome' },
-  { icon: CheckSquare, label: 'Homework', to: '/homework' },
-  { icon: Calendar, label: 'Planner', to: '/planner' },
-  { icon: ListTodo, label: 'Routines', to: '/routines' },
-  { icon: GraduationCap, label: 'AI Tutor', to: '/tutor' },
-  { icon: FileText, label: 'Workspace', to: '/workspace' },
-  { icon: ClipboardList, label: 'Exam Hub', to: '/exams' },
+  { icon: LayoutDashboard, label: 'Dashboard', to: '/app' },
+  { icon: BookOpen, label: 'Notes', to: '/app/notes' },
+  { icon: Dna, label: 'Knowledge DNA', to: '/app/genome' },
+  { icon: CheckSquare, label: 'Homework', to: '/app/homework' },
+  { icon: Calendar, label: 'Planner', to: '/app/planner' },
+  { icon: ListTodo, label: 'Routines', to: '/app/routines' },
+  { icon: GraduationCap, label: 'AI Tutor', to: '/app/tutor' },
+  { icon: FileText, label: 'Workspace', to: '/app/workspace' },
+  { icon: ClipboardList, label: 'Exam Hub', to: '/app/exams' },
 ];
 
 type SidebarProps = {
@@ -22,8 +22,7 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
-  const { user, logout } = useAuth();
-  const [showSettings, setShowSettings] = useState(false);
+  const { user } = useAuth();
   return (
     <>
       {/* Mobile overlay */}
@@ -34,7 +33,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         />
       )}
       <div className={cn(
-        "w-64 glass-panel h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
+        "w-64 border-r border-border/50 bg-white/70 dark:bg-black/70 backdrop-blur-xl backdrop-saturate-150 shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         <div className="h-16 flex items-center px-6 border-b relative">
@@ -71,37 +70,28 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       </div>
 
       <div className="p-4 border-t relative">
-        {showSettings && (
-          <div className="absolute bottom-full left-4 mb-2 w-56 bg-card border shadow-lg rounded-xl overflow-hidden">
-            <div className="p-3 border-b bg-muted/30">
-              <p className="text-sm font-medium">My Account</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-            <button 
-              onClick={() => {
-                setShowSettings(false);
-                logout();
-              }}
-              className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-            >
-              Sign out
-            </button>
-          </div>
-        )}
-        <button 
-          onClick={() => setShowSettings(!showSettings)}
-          className="flex items-center justify-between px-3 py-2 w-full rounded-md text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        <NavLink 
+          to="/app/settings"
+          className={({ isActive }) => cn(
+            "flex items-center justify-between px-3 py-2 w-full rounded-md text-sm font-medium transition-colors",
+            isActive 
+              ? "bg-primary text-primary-foreground" 
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
         >
           <div className="flex items-center space-x-3">
             <Settings className="w-4 h-4" />
             <span>Settings</span>
           </div>
           {user?.class_level && (
-            <span className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            <span className={cn(
+              "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full",
+              // We need to check if isActive somehow, but NavLink's children can take a function
+            )}>
               {user.class_level}
             </span>
           )}
-        </button>
+        </NavLink>
       </div>
       </div>
     </>

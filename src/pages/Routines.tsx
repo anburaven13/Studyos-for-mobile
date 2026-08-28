@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../lib/api';
 import { Calendar, CheckCircle2, Circle, Edit, Loader2, Sparkles, X, Wand2, FileJson, Brain, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractRoutineFromData } from '../lib/aiService';
+import { syncRoutineNotifications } from '../lib/notifications';
 
 type Block = {
   id: string;
@@ -45,8 +45,8 @@ export default function Routines() {
       if (!token) return;
       try {
         const [schRes, progRes] = await Promise.all([
-          apiFetch('/api/routines', { headers: { 'Authorization': `Bearer ${token}` } }),
-          apiFetch(`/api/routines/progress?date=${todayStr}`, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch('/api/routines', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`/api/routines/progress?date=${todayStr}`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         if (schRes.ok) setSchedule(await schRes.json());
         if (progRes.ok) setProgress(await progRes.json());
@@ -57,6 +57,17 @@ export default function Routines() {
     fetchRoutine();
   }, [todayStr]);
 
+  // Sync push notifications whenever schedule or progress changes
+  useEffect(() => {
+    if (schedule && schedule[todayName]) {
+      const blocks = schedule[todayName].map(b => ({
+        ...b,
+        completed: !!progress[b.id]
+      }));
+      syncRoutineNotifications(blocks);
+    }
+  }, [schedule, progress, todayName]);
+
   const toggleProgress = async (blockId: string) => {
     const newProgress = { ...progress, [blockId]: !progress[blockId] };
     setProgress(newProgress);
@@ -64,7 +75,7 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await apiFetch('/api/routines/progress', {
+      await fetch('/api/routines/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ date: todayStr, progress: newProgress })
@@ -89,14 +100,14 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await apiFetch('/api/routines', {
+      await fetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ schedule: sorted })
       });
 
       // Sync routine school/class blocks to Planner timetable
-      await apiFetch('/api/routines/sync-planner', {
+      await fetch('/api/routines/sync-planner', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

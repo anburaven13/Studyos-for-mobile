@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Markdown from 'react-markdown';
 import { Sparkles, Loader2, Check, Trash } from 'lucide-react';
 import { simulateAiResponse, generateFlashcards, extractTextFromDocument } from '../lib/aiService';
-import { apiFetch } from '../lib/api';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
 
@@ -37,7 +36,7 @@ export default function Notes() {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await apiFetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           if (data.length > 0) {
@@ -121,7 +120,7 @@ export default function Notes() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await apiFetch('/api/notes', {
+      const res = await fetch('/api/notes', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -201,7 +200,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await apiFetch('/api/ai/quiz', {
+      const res = await fetch('/api/ai/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, userContext })
@@ -232,7 +231,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await apiFetch('/api/dna/compile', {
+      const res = await fetch('/api/dna/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, source_id: activeNote.id })
@@ -297,7 +296,7 @@ export default function Notes() {
   }, {});
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full min-h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] flex flex-col">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
       <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 flex-shrink-0">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">AI Notes</h1>
@@ -341,9 +340,9 @@ export default function Notes() {
         </div>
       </div>
 
-      <div className="border rounded-2xl shadow-sm flex flex-col md:flex-row flex-1 min-h-[800px] md:min-h-0 overflow-hidden bg-card">
+      <div className="border rounded-2xl shadow-sm flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-card">
         {/* Sidebar */}
-        <div className="w-full md:w-64 max-h-[200px] md:max-h-none md:h-auto border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0 overflow-y-auto">
+        <div className="w-full md:w-64 h-[20vh] md:h-auto border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0 overflow-y-auto">
           {Object.keys(groupedNotes).map(folder => (
             <div key={folder} className="mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-6 mt-4">{folder}</p>
@@ -379,7 +378,7 @@ export default function Notes() {
 
         {/* Editor / Preview */}
         <div className="flex-1 flex flex-col lg:flex-row relative min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x">
-          <div className="flex-1 flex flex-col min-h-[400px] md:min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {quizActive ? (
               <div className="w-full h-full p-8 overflow-y-auto flex flex-col items-center justify-center">
                 <div className="max-w-2xl w-full bg-card border rounded-2xl shadow-sm p-8">
@@ -498,7 +497,7 @@ export default function Notes() {
           </div>
           
           {/* AI Sidebar */}
-          <div className="w-full lg:w-80 h-auto md:h-auto bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
+          <div className="w-full lg:w-80 h-[35vh] lg:h-auto bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
             <h3 className="font-semibold mb-6 flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-primary" />
               <span>AI Tools</span>

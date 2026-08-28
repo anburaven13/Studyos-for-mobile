@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { apiFetch } from '../lib/api';
 import { Plus, Check, Circle, Sparkles, Loader2, X, Trash } from 'lucide-react';
 import { simulateAiResponse } from '../lib/aiService';
+import { Helmet } from 'react-helmet-async';
 
 type Task = {
   id: string;
@@ -25,7 +24,7 @@ export default function Homework() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await apiFetch('/api/homework', {
+      const res = await fetch('/api/homework', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -83,7 +82,7 @@ export default function Homework() {
     if (!token) return;
 
     try {
-      const res = await apiFetch('/api/homework', {
+      const res = await fetch('/api/homework', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -118,6 +117,10 @@ export default function Homework() {
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col relative">
+      <Helmet>
+        <title>Homework | StudyOS</title>
+      </Helmet>
+      
       <div className="mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Homework</h1>

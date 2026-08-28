@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Square } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { apiFetch } from '../../lib/api';
 
 export default function StudyTimer() {
   const [isRunning, setIsRunning] = useState(() => {
@@ -47,7 +46,7 @@ export default function StudyTimer() {
         if (token) {
           try {
             const today = new Date().toISOString().split('T')[0];
-            await apiFetch('/api/study_sessions', {
+            await fetch('/api/study_sessions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

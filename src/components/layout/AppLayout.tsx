@@ -1,57 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import StudyTimer from './StudyTimer';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Menu } from 'lucide-react';
-import { App as CapacitorApp } from '@capacitor/app';
-import { Capacitor } from '@capacitor/core';
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-        if (!canGoBack) {
-          CapacitorApp.exitApp();
-        } else {
-          window.history.back();
-        }
-      });
-    }
-    return () => {
-      if (Capacitor.isNativePlatform()) {
-        CapacitorApp.removeAllListeners();
-      }
-    };
-  }, []);
-
   useHotkeys('ctrl+n, meta+n', (e) => {
     e.preventDefault();
-    navigate('/notes');
+    navigate('/app/notes');
   });
 
   useHotkeys('ctrl+k, meta+k', (e) => {
     e.preventDefault();
-    navigate('/tutor');
+    navigate('/app/tutor');
   });
 
   return (
     <div className="min-h-screen bg-transparent text-foreground flex flex-col md:flex-row relative">
-      {/* Ambient Background Orbs (Pastel Soft Blue) */}
+      {/* Ambient Background Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-300/20 dark:bg-blue-600/20 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '10s' }} />
-        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-cyan-300/20 dark:bg-cyan-600/20 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '14s', animationDelay: '2s' }} />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-indigo-300/20 dark:bg-indigo-600/20 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '18s', animationDelay: '4s' }} />
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/10 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '10s' }} />
+        <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full bg-blue-500/10 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '14s', animationDelay: '2s' }} />
+        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full bg-purple-500/10 mix-blend-multiply dark:mix-blend-screen filter blur-[100px] opacity-70 animate-pulse" style={{ animationDuration: '18s', animationDelay: '4s' }} />
       </div>
 
       <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       
       <main className="flex-1 md:ml-64 min-h-screen flex flex-col">
         {/* Mobile Header */}
-        <div className="md:hidden h-16 glass-panel flex items-center px-4 justify-between z-30 sticky top-0">
+        <div className="md:hidden h-16 border-b border-border/50 flex items-center px-4 justify-between bg-white/70 dark:bg-black/70 backdrop-blur-xl backdrop-saturate-150 z-30 sticky top-0 shadow-[0_4px_30px_rgba(0,0,0,0.05)]">
           <span className="font-bold tracking-tight flex items-center space-x-2">
             <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs">S</div>
             <span>StudyOS</span>
