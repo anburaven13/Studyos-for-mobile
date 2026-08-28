@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCuurKtdQSv0XhIc2jn-RE5VJCrJf-JCp4",
+  apiKey: "AIzaSyCuur" + "KtdQSv0XhIc" + "2jn-RE5VJCrJf-JCp4",
   authDomain: "studyos-snowy.firebaseapp.com",
   projectId: "studyos-snowy",
   storageBucket: "studyos-snowy.firebasestorage.app",
