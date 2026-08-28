@@ -10,6 +10,7 @@ type Message = {
   id: string;
   role: 'user' | 'ai';
   content: string;
+  attachmentUrl?: string;
 };
 
 export default function Tutor() {
@@ -28,6 +29,8 @@ export default function Tutor() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{file: File, url: string} | null>(null);
+  
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,49 +56,64 @@ export default function Tutor() {
     localStorage.setItem('tutor_messages', JSON.stringify(messages));
   }, [messages]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    setIsParsing(true);
-    try {
-      const extractedText = await extractTextFromDocument(file);
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString(), 
-        role: 'user', 
-        content: `[Document Context from ${file.name}: ${extractedText.substring(0, 50)}...]`
-      }, {
-        id: (Date.now() + 1).toString(),
-        role: 'ai',
-        content: `I've finished reading "${file.name}". What would you like me to help you with regarding this document?`
-      }]);
-      setIsParsing(false);
-    } catch (error) {
-      console.error('Upload Error:', error);
-      alert('Failed to process file.');
-      setIsParsing(false);
+    
+    const url = URL.createObjectURL(file);
+    setAttachedFile({ file, url });
+    
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
     }
   };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !attachedFile) return;
 
-    const userMessage: Message = { id: Date.now().toString(), role: 'user', content: input };
+    let userContent = input.trim() || 'Please analyze this document.';
+    let currentAttachedFile = attachedFile;
+
+    const userMessage: Message = { 
+        id: Date.now().toString(), 
+        role: 'user', 
+        content: userContent,
+        attachmentUrl: currentAttachedFile?.url
+    };
+    
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
+    setAttachedFile(null);
     setIsTyping(true);
 
-    const providerInfo = {
-      provider,
-      apiKey: provider === 'nvidia' ? apiKey : undefined,
-      model: provider === 'nvidia' ? 'nvidia/nemotron-3-ultra-550b-a55b' : undefined
-    };
+    try {
+        let aiMessages = [...newMessages];
+        if (currentAttachedFile) {
+            setIsParsing(true);
+            const extractedText = await extractTextFromDocument(currentAttachedFile.file);
+            aiMessages[aiMessages.length - 1] = {
+                ...userMessage,
+                content: `[Attached File Context from ${currentAttachedFile.file.name}: ${extractedText}]\n\nUser Question: ${userContent}`
+            };
+            setIsParsing(false);
+        }
 
-    const aiResponseContent = await simulateAiResponse(newMessages, undefined, userContext, providerInfo);
-    const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: aiResponseContent };
-    
-    setMessages(prev => [...prev, aiMessage]);
+        const providerInfo = {
+          provider,
+          apiKey: provider === 'nvidia' ? apiKey : undefined,
+          model: provider === 'nvidia' ? 'nvidia/nemotron-3-ultra-550b-a55b' : undefined
+        };
+
+        const aiResponseContent = await simulateAiResponse(aiMessages, undefined, userContext, providerInfo);
+        const aiMessage: Message = { id: (Date.now() + 1).toString(), role: 'ai', content: aiResponseContent };
+        
+        setMessages(prev => [...prev, aiMessage]);
+    } catch (err) {
+        console.error('Send Error:', err);
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', content: "Sorry, I encountered an error while processing that." }]);
+        setIsParsing(false);
+    }
     setIsTyping(false);
   };
 
@@ -174,7 +192,12 @@ export default function Tutor() {
               </div>
               <div className={cn("max-w-[80%] rounded-xl p-4 text-sm leading-relaxed", msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted/50 border')}>
                 {msg.role === 'user' ? (
-                  msg.content
+                  <div className="flex flex-col gap-2">
+                    {msg.attachmentUrl && (
+                        <img src={msg.attachmentUrl} alt="User attachment" className="max-w-[200px] rounded-lg border border-primary/20 object-contain" />
+                    )}
+                    <span>{msg.content}</span>
+                  </div>
                 ) : (
                   <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:border prose-pre:border-border">
                     <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
@@ -197,37 +220,57 @@ export default function Tutor() {
           )}
           <div ref={endOfMessagesRef} />
         </div>
-        <div className="p-4 border-t bg-background flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <input 
-            type="file"
-            accept="image/*,application/pdf"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-          />
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="p-3 bg-muted hover:bg-muted-foreground/10 text-muted-foreground rounded-xl transition-colors flex-shrink-0 flex items-center justify-center"
-            title="Upload Image or PDF"
-            disabled={isParsing}
-          >
-            {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-          </button>
-          <input 
-            type="text"
-            className="flex-1 bg-muted/50 border border-transparent focus:border-border rounded-xl px-4 py-3 outline-none text-sm transition-colors"
-            placeholder="Ask a question..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          />
-          <button 
-            onClick={handleSend}
-            disabled={!input.trim() || isTyping}
-            className="w-12 h-12 flex-shrink-0 bg-primary text-primary-foreground rounded-xl flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
-          >
-            <Send className="w-5 h-5 ml-1" />
-          </button>
+        <div className="p-4 border-t bg-background flex flex-col gap-4">
+          {attachedFile && (
+            <div className="relative inline-block self-start">
+                {attachedFile.file.type.startsWith('image/') ? (
+                    <img src={attachedFile.url} alt="Attachment" className="h-20 w-20 object-cover rounded-lg border" />
+                ) : (
+                    <div className="h-20 w-20 flex items-center justify-center bg-muted rounded-lg border text-xs text-center p-2 break-all">
+                        {attachedFile.file.name}
+                    </div>
+                )}
+                <button 
+                    onClick={() => setAttachedFile(null)}
+                    className="absolute -top-2 -right-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full p-1 shadow-sm transition-colors"
+                    title="Remove Attachment"
+                >
+                    <Trash2 className="w-3 h-3" />
+                </button>
+            </div>
+          )}
+          <div className="flex flex-row items-stretch sm:items-center gap-4 w-full">
+            <input 
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 bg-muted hover:bg-muted-foreground/10 text-muted-foreground rounded-xl transition-colors flex-shrink-0 flex items-center justify-center"
+              title="Upload Image or PDF"
+              disabled={isParsing}
+            >
+              {isParsing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+            </button>
+            <input 
+              type="text"
+              className="flex-1 bg-muted/50 border border-transparent focus:border-border rounded-xl px-4 py-3 outline-none text-sm transition-colors"
+              placeholder="Ask a question..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            />
+            <button 
+              onClick={handleSend}
+              disabled={(!input.trim() && !attachedFile) || isTyping || isParsing}
+              className="w-12 h-12 flex-shrink-0 bg-primary text-primary-foreground rounded-xl flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition-opacity"
+            >
+              <Send className="w-5 h-5 ml-1" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
