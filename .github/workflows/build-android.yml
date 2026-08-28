@@ -56,13 +56,29 @@ jobs:
           name: StudyOS-Mobile-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Create Latest Release
+      - name: Get package version
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/master'
         with:
-          tag_name: latest
-          name: Latest Mobile Build
-          body: "Automatically generated APK from the latest master commit."
+          tag_name: v${{ steps.package-version.outputs.version }}
+          name: StudyOS Mobile v${{ steps.package-version.outputs.version }} (Preview)
+          body: |
+            Welcome to the latest build of StudyOS for Android! This release brings the mobile app fully up to date with the web version, packed with smart automation and new native capabilities.
+            
+            **✨ What's New in this Build:**
+            * **Native Push Notifications:** Get alerted directly on your device 10 minutes before a study block starts, and receive a reminder when a block finishes.
+            * **Smart Sleep Automation:** Missed block emails and notifications are now fully aware of overnight study sessions.
+            * **Seamless Cloud Sync:** The mobile app now seamlessly intercepts network requests, pointing directly to the live cloud backend.
+            * **Security & Authentication:** Includes the newest UI updates and support for our new 2FA (Two-Factor Authentication) security flows.
+            
+            **🛠️ Installation Instructions:**
+            1. Download the `app-debug.apk` file attached below to your Android device.
+            2. Open the file to begin installation. *(Note: You may need to allow "Install from Unknown Sources" in your Android settings).*
+            3. Log in with your StudyOS account and your routines will instantly sync!
           files: android/app/build/outputs/apk/debug/app-debug.apk
           prerelease: true
         env:
