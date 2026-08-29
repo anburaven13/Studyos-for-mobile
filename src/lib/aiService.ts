@@ -1,3 +1,5 @@
+import { auth } from './firebase';
+
 export type ProviderInfo = {
   provider: 'openrouter' | 'nvidia' | 'groq';
   apiKey?: string;
@@ -6,7 +8,8 @@ export type ProviderInfo = {
 
 export const simulateAiResponse = async (prompt: string | any[], customSystemPrompt?: string, userContext?: string, providerInfo?: ProviderInfo) => {
   try {
-    const token = localStorage.getItem('token');
+    const currentUser = auth.currentUser;
+    const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
     
     const body: any = { customSystemPrompt, userContext, providerInfo };
     if (typeof prompt === 'string') {
@@ -44,7 +47,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 export const extractTextFromDocument = async (file: File): Promise<string> => {
   try {
-    const token = localStorage.getItem('token');
+    const currentUser = auth.currentUser;
+    const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
     
     if (file.type === 'application/pdf') {
       const arrayBuffer = await file.arrayBuffer();
@@ -117,7 +121,8 @@ export const extractTextFromDocument = async (file: File): Promise<string> => {
 
 export const generateFlashcards = async (content: string, userContext?: string): Promise<{front: string, back: string}[]> => {
   try {
-    const token = localStorage.getItem('token');
+    const currentUser = auth.currentUser;
+    const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
     const response = await fetch('/api/ai/flashcards', {
       method: 'POST',
       headers: { 
@@ -141,7 +146,8 @@ export const generateFlashcards = async (content: string, userContext?: string):
 
 export const extractRoutineFromData = async (rawData: string): Promise<{schedule: Record<string, any[]>} | null> => {
   try {
-    const token = localStorage.getItem('token');
+    const currentUser = auth.currentUser;
+    const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
     const response = await fetch('/api/ai/extract-routine', {
       method: 'POST',
       headers: { 
