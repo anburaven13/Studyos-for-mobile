@@ -36,8 +36,11 @@ export default function Tutor() {
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
-  const [provider, setProvider] = useState<'groq' | 'nvidia'>(
-    (localStorage.getItem('ai_provider') as 'groq' | 'nvidia') || 'groq'
+  const [provider, setProvider] = useState<'google' | 'nvidia'>(
+    (localStorage.getItem('ai_provider') as 'google' | 'nvidia') || 'google'
+  );
+  const [model, setModel] = useState<string>(
+    localStorage.getItem('ai_model') || 'auto'
   );
   const [apiKey, setApiKey] = useState(localStorage.getItem('nvidia_key') || '');
 
@@ -45,7 +48,8 @@ export default function Tutor() {
   useEffect(() => {
     localStorage.setItem('ai_provider', provider);
     localStorage.setItem('nvidia_key', apiKey);
-  }, [provider, apiKey]);
+    localStorage.setItem('ai_model', model);
+  }, [provider, apiKey, model]);
 
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,7 +106,7 @@ export default function Tutor() {
         const providerInfo = {
           provider,
           apiKey: provider === 'nvidia' ? apiKey : undefined,
-          model: provider === 'nvidia' ? 'nvidia/nemotron-3-ultra-550b-a55b' : undefined
+          model: provider === 'nvidia' ? 'nvidia/nemotron-3-ultra-550b-a55b' : model
         };
 
         const aiResponseContent = await simulateAiResponse(aiMessages, undefined, userContext, providerInfo);
@@ -159,10 +163,29 @@ export default function Tutor() {
                 onChange={(e) => setProvider(e.target.value as any)}
                 className="w-full p-2.5 bg-background border rounded-lg text-sm outline-none focus:border-primary"
               >
-                <option value="groq">Groq (GPT-OSS-120B)</option>
+                <option value="google">Google / Gemini (Default)</option>
                 <option value="nvidia">Nvidia Nemotron (NVIDIA NIM)</option>
               </select>
             </div>
+            
+            {provider === 'google' && (
+              <div className="animate-in fade-in slide-in-from-top-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Model Selection</label>
+                <select 
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  className="w-full p-2.5 bg-background border rounded-lg text-sm outline-none focus:border-primary"
+                >
+                  <option value="auto">Auto (Smart Fallback Selection)</option>
+                  <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                  <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                  <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+                  <option value="gemma-4-31b-it">Gemma 4 31B</option>
+                  <option value="gemma-4-26b-a4b-it">Gemma 4 26B MoE</option>
+                  <option value="gemma-4-4b-it">Gemma 4 4B</option>
+                </select>
+              </div>
+            )}
             
             {provider === 'nvidia' && (
               <div className="animate-in fade-in slide-in-from-top-2">

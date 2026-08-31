@@ -1,7 +1,7 @@
 import { auth } from './firebase';
 
 export type ProviderInfo = {
-  provider: 'openrouter' | 'nvidia' | 'groq';
+  provider: 'openrouter' | 'nvidia' | 'groq' | 'google';
   apiKey?: string;
   model?: string;
 };
