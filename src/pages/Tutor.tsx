@@ -36,9 +36,11 @@ export default function Tutor() {
 
   // Settings State
   const [showSettings, setShowSettings] = useState(false);
-  const [provider, setProvider] = useState<'google' | 'nvidia'>(
-    (localStorage.getItem('ai_provider') as 'google' | 'nvidia') || 'google'
-  );
+  const [provider, setProvider] = useState<'google' | 'nvidia'>(() => {
+    const saved = localStorage.getItem('ai_provider');
+    if (saved === 'groq') return 'google';
+    return (saved as 'google' | 'nvidia') || 'google';
+  });
   const [model, setModel] = useState<string>(
     localStorage.getItem('ai_model') || 'auto'
   );
