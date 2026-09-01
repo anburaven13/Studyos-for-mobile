@@ -1,10 +1,18 @@
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { Capacitor } from '@capacitor/core';
 import './Landing.css';
 
 export default function Landing() {
+  const navigate = useNavigate();
+
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    
     // Animation fallback logic
     let frame1: number, frame2: number;
     frame1 = requestAnimationFrame(() => {
