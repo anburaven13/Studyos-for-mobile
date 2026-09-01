@@ -36,10 +36,10 @@ export default function Support() {
               Send us an email anytime. We typically respond within 24-48 hours.
             </p>
             <a 
-              href="mailto:studyos.notification@gmail.com" 
+              href="mailto:atudyos.notification@gmail.com" 
               className="bg-primary text-primary-foreground font-medium py-3 px-4 rounded-lg hover:opacity-90 transition-opacity w-full text-sm"
             >
-              studyos.notification@gmail.com
+              atudyos.notification@gmail.com
             </a>
           </div>
 
