@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Calendar, CheckSquare, BrainCircuit, Settings, ListTodo, GraduationCap, FileText, ClipboardList, X, Dna } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Calendar, CheckSquare, BrainCircuit, Settings, ListTodo, GraduationCap, FileText, ClipboardList, X, Dna, HelpCircle, MessageCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../lib/AuthContext';
 
@@ -67,6 +67,36 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
             <span>{item.label}</span>
           </NavLink>
         ))}
+
+        <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">Help & Support</p>
+        <NavLink
+          to="/faq"
+          className={({ isActive }) =>
+            cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              isActive 
+                ? "bg-primary text-primary-foreground" 
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )
+          }
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>FAQ</span>
+        </NavLink>
+        <NavLink
+          to="/support"
+          className={({ isActive }) =>
+            cn(
+              "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              isActive 
+                ? "bg-primary text-primary-foreground" 
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )
+          }
+        >
+          <HelpCircle className="w-4 h-4" />
+          <span>Support</span>
+        </NavLink>
       </div>
 
       <div className="p-4 border-t relative">

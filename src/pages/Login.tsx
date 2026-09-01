@@ -328,6 +328,12 @@ export default function Login() {
             {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </div>
+
+        <div className="mt-8 pt-6 border-t border-border flex justify-center space-x-4 text-xs text-muted-foreground">
+          <button onClick={() => navigate('/faq')} className="hover:text-foreground hover:underline">FAQ</button>
+          <span>&bull;</span>
+          <button onClick={() => navigate('/support')} className="hover:text-foreground hover:underline">Contact Support</button>
+        </div>
       </div>
     </div>
   );
