@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, Circle, Edit, Loader2, Sparkles, X, Wand2, FileJson, Brain, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractRoutineFromData } from '../lib/aiService';
-import { syncRoutineNotifications } from '../lib/notifications';
 
 type Block = {
   id: string;
@@ -56,17 +55,6 @@ export default function Routines() {
     };
     fetchRoutine();
   }, [todayStr]);
-
-  // Sync push notifications whenever schedule or progress changes
-  useEffect(() => {
-    if (schedule && schedule[todayName]) {
-      const blocks = schedule[todayName].map(b => ({
-        ...b,
-        completed: !!progress[b.id]
-      }));
-      syncRoutineNotifications(blocks);
-    }
-  }, [schedule, progress, todayName]);
 
   const toggleProgress = async (blockId: string) => {
     const newProgress = { ...progress, [blockId]: !progress[blockId] };

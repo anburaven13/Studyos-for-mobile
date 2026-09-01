@@ -12,7 +12,6 @@ export default function Notes() {
   const [activeNoteId, setActiveNoteId] = useState<string>('new');
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [summary, setSummary] = useState('');
   const [flashcards, setFlashcards] = useState<{front: string, back: string}[]>([]);
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
@@ -297,21 +296,23 @@ export default function Notes() {
   }, {});
 
   return (
-    <div className="p-3 md:p-8 max-w-6xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
-      <div className="mb-3 md:mb-6 flex flex-row items-center justify-between gap-2 flex-shrink-0">
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-3xl font-semibold tracking-tight">AI Notes</h1>
-          <div className="flex items-center space-x-2 mt-0.5">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
+      <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 flex-shrink-0">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">AI Notes</h1>
+          <div className="flex items-center space-x-2 mt-1">
+            <p className="text-muted-foreground">Capture ideas, generate flashcards, and learn.</p>
+            <span className="text-muted-foreground/50">•</span>
             <div className="flex items-center text-xs text-muted-foreground">
               {saveStatus === 'Saving...' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />}
               {saveStatus}
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => setIsEditing(!isEditing)}
-            className="border bg-background text-foreground px-3 py-1.5 rounded-md font-medium text-xs md:text-sm hover:bg-muted transition-colors"
+            className="border bg-background text-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-muted transition-colors"
           >
             {isEditing ? 'Preview' : 'Edit'}
           </button>
@@ -325,77 +326,54 @@ export default function Notes() {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="border bg-background text-foreground px-3 py-1.5 rounded-md font-medium text-xs md:text-sm hover:bg-muted transition-colors hidden md:flex items-center gap-2"
+            className="border bg-background text-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-muted transition-colors flex items-center gap-2"
           >
             Import PDF
           </button>
 
           <button 
             onClick={createNewNote}
-            className="bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium text-xs md:text-sm hover:opacity-90 transition-opacity"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm hover:opacity-90 transition-opacity"
           >
-            + New
+            New Note
           </button>
         </div>
       </div>
 
       <div className="border rounded-2xl shadow-sm flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-card">
-        {/* Sidebar - horizontal chips on mobile, vertical list on desktop */}
-        <div className="w-full md:w-56 border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0">
-          {/* Mobile: horizontal scrolling chips */}
-          <div className="md:hidden flex items-center gap-2 px-3 py-2 overflow-x-auto no-scrollbar">
-            {notesList.map((note: Note) => (
-              <button 
-                key={note.id}
-                onClick={() => {
-                  setActiveNoteId(note.id.toString());
-                  setSummary('');
-                  setFlashcards([]);
-                  setQuizActive(false);
-                }}
-                className={cn(
-                  "flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap",
-                  note.id.toString() === activeNoteId.toString() ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                )}
-              >
-                {note.title || 'Untitled'}
-              </button>
-            ))}
-          </div>
-          {/* Desktop: vertical list */}
-          <div className="hidden md:block overflow-y-auto h-full">
-            {Object.keys(groupedNotes).map(folder => (
-              <div key={folder} className="mb-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-4 mt-3">{folder}</p>
-                <div className="space-y-0.5 px-3">
-                  {groupedNotes[folder].map((note: Note) => (
-                    <button 
-                      key={note.id}
-                      onClick={() => {
-                        setActiveNoteId(note.id.toString());
-                        setSummary('');
-                        setFlashcards([]);
-                        setQuizActive(false);
-                      }}
+        {/* Sidebar */}
+        <div className="w-full md:w-64 h-[20vh] md:h-auto border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0 overflow-y-auto">
+          {Object.keys(groupedNotes).map(folder => (
+            <div key={folder} className="mb-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-6 mt-4">{folder}</p>
+              <div className="space-y-1 px-4">
+                {groupedNotes[folder].map((note: Note) => (
+                  <button 
+                    key={note.id}
+                    onClick={() => {
+                      setActiveNoteId(note.id.toString());
+                      setSummary('');
+                      setFlashcards([]);
+                      setQuizActive(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
+                      note.id.toString() === activeNoteId.toString() ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <span className="truncate pr-2">{note.title || 'Untitled Note'}</span>
+                    <Trash 
                       className={cn(
-                        "w-full text-left px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
-                        note.id.toString() === activeNoteId.toString() ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                      )}
-                    >
-                      <span className="truncate pr-2">{note.title || 'Untitled Note'}</span>
-                      <Trash 
-                        className={cn(
-                          "w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive",
-                          note.id.toString() === activeNoteId.toString() && "opacity-100"
-                        )} 
-                        onClick={(e) => deleteNote(note.id.toString(), e)}
-                      />
-                    </button>
-                  ))}
-                </div>
+                        "w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive",
+                        note.id.toString() === activeNoteId.toString() && "opacity-100"
+                      )} 
+                      onClick={(e) => deleteNote(note.id.toString(), e)}
+                    />
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Editor / Preview */}
@@ -518,97 +496,74 @@ export default function Notes() {
             )}
           </div>
           
-          {/* AI Sidebar - collapsible on mobile */}
-          <div className={cn(
-            "w-full lg:w-72 bg-muted/10 flex flex-col flex-shrink-0 overflow-y-auto transition-all duration-300",
-            aiPanelOpen ? 'h-auto max-h-[40vh] lg:max-h-none lg:h-auto' : 'h-auto lg:h-auto'
-          )}>
-            {/* Mobile toggle bar */}
-            <button 
-              onClick={() => setAiPanelOpen(!aiPanelOpen)}
-              className="lg:hidden flex items-center justify-between w-full px-4 py-2.5 bg-muted/30 border-t text-sm font-medium"
-            >
-              <span className="flex items-center space-x-2">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                <span>AI Tools</span>
-              </span>
-              <span className={cn("transition-transform text-xs", aiPanelOpen ? 'rotate-180' : '')}>
-                ▼
-              </span>
-            </button>
-            {/* Desktop always-visible header */}
-            <h3 className="hidden lg:flex font-semibold p-4 pb-2 items-center space-x-2">
+          {/* AI Sidebar */}
+          <div className="w-full lg:w-80 h-[35vh] lg:h-auto bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
+            <h3 className="font-semibold mb-6 flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-primary" />
               <span>AI Tools</span>
             </h3>
             
-            <div className={cn(
-              "px-4 pb-4 lg:block",
-              aiPanelOpen ? 'block' : 'hidden'
-            )}>
-              {/* Mobile: compact 2x2 grid. Desktop: stacked */}
-              <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 lg:gap-3 lg:mb-6 mt-2 lg:mt-0">
-                <button 
-                  onClick={handleGenerateSummary}
-                  disabled={isGenerating || !activeNote.content.trim()}
-                  className="border bg-background text-xs lg:text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
-                >
-                  Summarize
-                </button>
-                <button 
-                  onClick={handleGenerateFlashcards}
-                  disabled={isGenerating || !activeNote.content.trim()}
-                  className="border bg-background text-xs lg:text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
-                >
-                  Flashcards
-                </button>
-                <button 
-                  onClick={handleGenerateQuiz}
-                  disabled={isGenerating || !activeNote.content.trim()}
-                  className="bg-primary text-primary-foreground text-xs lg:text-sm font-medium py-2 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
-                >
-                  AI Quiz
-                </button>
-                <button 
-                  onClick={handleCompileDNA}
-                  disabled={isGenerating || !activeNote.content.trim()}
-                  className="bg-purple-600 text-white text-xs lg:text-sm font-medium py-2 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
-                >
-                  DNA
-                </button>
-              </div>
-
-              {isGenerating && (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <Loader2 className="w-6 h-6 animate-spin mb-3" />
-                  <p className="text-sm">AI is thinking...</p>
-                </div>
-              )}
-
-              {!isGenerating && summary && (
-                <div className="bg-primary/5 border-primary/20 border p-4 rounded-xl text-sm leading-relaxed mt-4">
-                  <p className="font-semibold text-primary mb-2">Summary</p>
-                  {summary}
-                </div>
-              )}
-
-              {!isGenerating && flashcards.length > 0 && (
-                <div className="space-y-4 mt-4">
-                  <p className="font-semibold text-primary">Generated Flashcards</p>
-                  {flashcards.map((fc, i) => (
-                    <div key={i} className="bg-card border p-4 rounded-xl shadow-sm">
-                      <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Front</p>
-                      <p className="text-sm font-medium mb-3">{fc.front}</p>
-                      <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Back</p>
-                      <p className="text-sm">{fc.back}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="space-y-3 mb-8">
+              <button 
+                onClick={handleGenerateSummary}
+                disabled={isGenerating || !activeNote.content.trim()}
+                className="w-full border bg-background text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
+              >
+                Summarize Note
+              </button>
+              <button 
+                onClick={handleGenerateFlashcards}
+                disabled={isGenerating || !activeNote.content.trim()}
+                className="w-full border bg-background text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
+              >
+                Generate Flashcards
+              </button>
+              <button 
+                onClick={handleGenerateQuiz}
+                disabled={isGenerating || !activeNote.content.trim()}
+                className="w-full bg-primary text-primary-foreground text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
+              >
+                Take AI Quiz
+              </button>
+              <button 
+                onClick={handleCompileDNA}
+                disabled={isGenerating || !activeNote.content.trim()}
+                className="w-full bg-purple-600 text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 flex items-center justify-center space-x-2 mt-4"
+              >
+                <span>Compile Knowledge DNA</span>
+              </button>
             </div>
+
+            {isGenerating && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                <p className="text-sm">AI is thinking...</p>
+              </div>
+            )}
+
+            {!isGenerating && summary && (
+              <div className="bg-primary/5 border-primary/20 border p-4 rounded-xl text-sm leading-relaxed">
+                <p className="font-semibold text-primary mb-2">Summary</p>
+                {summary}
+              </div>
+            )}
+
+            {!isGenerating && flashcards.length > 0 && (
+              <div className="space-y-4">
+                <p className="font-semibold text-primary">Generated Flashcards</p>
+                {flashcards.map((fc, i) => (
+                  <div key={i} className="bg-card border p-4 rounded-xl shadow-sm">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Front</p>
+                    <p className="text-sm font-medium mb-3">{fc.front}</p>
+                    <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Back</p>
+                    <p className="text-sm">{fc.back}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

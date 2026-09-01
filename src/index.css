@@ -75,12 +75,3 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
-
-/* Hide scrollbar for horizontal note chips */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
