@@ -1,0 +1,78 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Signed APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Assets
+        run: npm run build
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Generate Keystore
+        run: |
+          cd android/app
+          keytool -genkey -v -keystore studyos-release-key.jks -alias studyos -keyalg RSA -keysize 2048 -validity 10000 -storepass oprtx4090 -keypass oprtx4090 -dname "CN=StudyOS, OU=StudyOS, O=StudyOS, L=City, S=State, C=US"
+
+      - name: Build Release APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleRelease
+
+      - name: Manual Sign APK using apksigner
+        run: |
+          cd android/app/build/outputs/apk/release
+          # Find the Android build tools version automatically
+          BUILD_TOOLS=$(ls -1 $ANDROID_HOME/build-tools | tail -n 1)
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign --ks ../../../../../studyos-release-key.jks --ks-key-alias studyos --ks-pass pass:oprtx4090 --key-pass pass:oprtx4090 app-release-unsigned.apk
+          mv app-release-unsigned.apk StudyOS-Release-Signed.apk
+
+      - name: Extract Commit Details for Release
+        id: commit_info
+        run: |
+          echo "TITLE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+          echo "BODY<<EOF" >> $GITHUB_ENV
+          git log -1 --pretty=format:'%b' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "VERSION=v1.0.${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.TITLE }}
+          body: ${{ env.BODY }}
+          files: |
+            android/app/build/outputs/apk/release/StudyOS-Release-Signed.apk
+            android/app/studyos-release-key.jks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
