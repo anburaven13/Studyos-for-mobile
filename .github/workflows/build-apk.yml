@@ -53,7 +53,7 @@ jobs:
           cd android/app/build/outputs/apk/release
           # Find the Android build tools version automatically
           BUILD_TOOLS=$(ls -1 $ANDROID_HOME/build-tools | tail -n 1)
-          $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign --ks ../../../studyos-release-key.jks --ks-key-alias studyos --ks-pass pass:oprtx4090 --key-pass pass:oprtx4090 app-release-unsigned.apk
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner sign --ks $GITHUB_WORKSPACE/android/app/studyos-release-key.jks --ks-key-alias studyos --ks-pass pass:oprtx4090 --key-pass pass:oprtx4090 app-release-unsigned.apk
           mv app-release-unsigned.apk StudyOS-Release-Signed.apk
 
       - name: Extract Commit Details for Release
