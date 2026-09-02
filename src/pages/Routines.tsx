@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, Circle, Edit, Loader2, Sparkles, X, Wand2, FileJson, Brain, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractRoutineFromData } from '../lib/aiService';
+import { syncRoutineNotifications } from '../lib/notifications';
+import type { RoutineBlock } from '../lib/notifications';
 
 type Block = {
   id: string;
@@ -47,7 +49,22 @@ export default function Routines() {
           fetch('/api/routines', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch(`/api/routines/progress?date=${todayStr}`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        if (schRes.ok) setSchedule(await schRes.json());
+        if (schRes.ok) {
+          const scheduleData = await schRes.json();
+          setSchedule(scheduleData);
+
+          // Sync today's routine blocks to local notifications
+          const currentDayIdx = new Date().getDay();
+          const dayName = currentDayIdx === 0 ? 'Sunday' : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentDayIdx - 1];
+          const todayBlocks: RoutineBlock[] = (scheduleData[dayName] || []).map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            start: b.start,
+            end: b.end,
+            completed: false
+          }));
+          syncRoutineNotifications(todayBlocks);
+        }
         if (progRes.ok) setProgress(await progRes.json());
       } catch (e) {
         console.error(e);
@@ -68,6 +85,18 @@ export default function Routines() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ date: todayStr, progress: newProgress })
       });
+
+      // Re-sync notifications with updated completion status
+      if (schedule) {
+        const todayBlocks: RoutineBlock[] = (schedule[todayName] || []).map((b: any) => ({
+          id: b.id,
+          title: b.title,
+          start: b.start,
+          end: b.end,
+          completed: !!newProgress[b.id]
+        }));
+        syncRoutineNotifications(todayBlocks);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -99,6 +128,18 @@ export default function Routines() {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      // Re-sync today's notifications with the updated schedule
+      const currentDayIdx = new Date().getDay();
+      const dayName = currentDayIdx === 0 ? 'Sunday' : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][currentDayIdx - 1];
+      const todayBlocks: RoutineBlock[] = (sorted[dayName] || []).map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        start: b.start,
+        end: b.end,
+        completed: false
+      }));
+      syncRoutineNotifications(todayBlocks);
     } catch (e) {
       console.error(e);
     }

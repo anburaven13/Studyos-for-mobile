@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './lib/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+import { requestNotificationPermissions } from './lib/notifications';
 
 // Code-splitting routes for better performance (LCP/Initial Load)
 const Login = React.lazy(() => import('./pages/Login'));
@@ -30,6 +31,11 @@ const PageLoader = () => (
 );
 
 function App() {
+  // Request notification permissions on app startup (Android)
+  useEffect(() => {
+    requestNotificationPermissions();
+  }, []);
+
   return (
     <HelmetProvider>
       <AuthProvider>
