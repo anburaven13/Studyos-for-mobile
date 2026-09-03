@@ -43,10 +43,20 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Generate Keystore
+      - name: Generate and Persist Keystore
         run: |
           cd android/app
-          keytool -genkey -v -keystore studyos-release-key.jks -alias studyos -keyalg RSA -keysize 2048 -validity 10000 -storepass oprtx4090 -keypass oprtx4090 -dname "CN=StudyOS, OU=StudyOS, O=StudyOS, L=City, S=State, C=US"
+          if [ ! -f "studyos-release-key.jks" ]; then
+            echo "Keystore not found. Generating a new persistent keystore..."
+            keytool -genkey -v -keystore studyos-release-key.jks -alias studyos -keyalg RSA -keysize 2048 -validity 10000 -storepass oprtx4090 -keypass oprtx4090 -dname "CN=StudyOS, OU=StudyOS, O=StudyOS, L=City, S=State, C=US"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add studyos-release-key.jks
+            git commit -m "chore: persist keystore for signed APKs [skip ci]"
+            git push
+          else
+            echo "Persistent keystore found! Using it to sign the APK."
+          fi
 
       - name: Build Release APK
         run: |
