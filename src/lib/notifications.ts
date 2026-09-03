@@ -27,7 +27,7 @@ function stringToNumericId(str: string): number {
     hash = ((hash << 5) - hash) + str.charCodeAt(i);
     hash |= 0; 
   }
-  return Math.abs(hash);
+  return Math.abs(hash) % 1000000000; // Ensure it stays well within signed 32-bit max
 }
 
 export async function syncRoutineNotifications(blocks: RoutineBlock[]) {
@@ -35,6 +35,19 @@ export async function syncRoutineNotifications(blocks: RoutineBlock[]) {
   
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) return;
+
+  // Create high-importance channel for Android 8.0+ to ensure heads-up banners appear
+  try {
+    await LocalNotifications.createChannel({
+      id: 'studyos-reminders',
+      name: 'Study Routines',
+      description: 'Reminders for your scheduled study blocks',
+      importance: 5, // High importance (pop-up banner)
+      visibility: 1
+    });
+  } catch (e) {
+    console.error("Failed to create notification channel", e);
+  }
 
   // Clear all previously scheduled notifications
   try {
@@ -72,7 +85,8 @@ export async function syncRoutineNotifications(blocks: RoutineBlock[]) {
         id: baseId + 1, // Start reminder ID
         title: 'StudyOS Reminder',
         body: `Get ready! Your study block "${block.title}" is starting soon (${block.start} - ${block.end}).`,
-        schedule: { at: tenMinsBefore }
+        schedule: { at: tenMinsBefore },
+        channelId: 'studyos-reminders'
       });
     }
 
@@ -82,7 +96,8 @@ export async function syncRoutineNotifications(blocks: RoutineBlock[]) {
         id: baseId + 2, // End reminder ID
         title: 'StudyOS Reminder',
         body: `Your scheduled study block "${block.title}" (${block.start} - ${block.end}) just finished, but you haven't checked it off.`,
-        schedule: { at: endDate }
+        schedule: { at: endDate },
+        channelId: 'studyos-reminders'
       });
     }
   });
