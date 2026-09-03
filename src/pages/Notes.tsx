@@ -295,16 +295,20 @@ export default function Notes() {
     return acc;
   }, {});
 
+  const [mobileView, setMobileView] = useState<'list' | 'editor' | 'ai'>('editor');
+
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
-      <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 flex-shrink-0">
+    <div className="flex-1 flex flex-col min-h-0 md:p-8 overflow-hidden bg-[#F9F6F0] dark:bg-stone-900">
+      
+      {/* Desktop Header */}
+      <div className="hidden md:flex mb-6 flex-col md:flex-row items-start md:items-center justify-between gap-4 flex-shrink-0">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">AI Notes</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-stone-800 dark:text-stone-100">AI Notes</h1>
           <div className="flex items-center space-x-2 mt-1">
             <p className="text-muted-foreground">Capture ideas, generate flashcards, and learn.</p>
             <span className="text-muted-foreground/50">•</span>
             <div className="flex items-center text-xs text-muted-foreground">
-              {saveStatus === 'Saving...' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />}
+              {saveStatus === 'Saving...' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1 text-emerald-500" />}
               {saveStatus}
             </div>
           </div>
@@ -312,7 +316,7 @@ export default function Notes() {
         <div className="flex flex-wrap gap-3">
           <button 
             onClick={() => setIsEditing(!isEditing)}
-            className="border bg-background text-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-muted transition-colors"
+            className="border border-stone-200 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 px-4 py-2 rounded-md font-medium text-sm hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors"
           >
             {isEditing ? 'Preview' : 'Edit'}
           </button>
@@ -326,7 +330,7 @@ export default function Notes() {
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            className="border bg-background text-foreground px-4 py-2 rounded-md font-medium text-sm hover:bg-muted transition-colors flex items-center gap-2"
+            className="border border-stone-200 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 px-4 py-2 rounded-md font-medium text-sm hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex items-center gap-2"
           >
             Import PDF
           </button>
@@ -340,12 +344,45 @@ export default function Notes() {
         </div>
       </div>
 
-      <div className="border rounded-2xl shadow-sm flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-card">
-        {/* Sidebar */}
-        <div className="w-full md:w-64 h-[20vh] md:h-auto border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0 overflow-y-auto">
+      {/* Main Content Area */}
+      <div className="border-0 md:border md:rounded-2xl shadow-none md:shadow-sm flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-white dark:bg-stone-950">
+        
+        {/* Mobile Navbar for Editor */}
+        <div className={`md:hidden flex items-center justify-between px-4 py-3 border-b bg-white dark:bg-stone-950 ${mobileView !== 'editor' ? 'hidden' : 'flex'}`}>
+          <button 
+            onClick={() => setMobileView('list')}
+            className="text-primary text-sm font-medium hover:underline"
+          >
+            ← Notes
+          </button>
+          <div className="flex items-center text-xs text-muted-foreground font-medium bg-stone-100 dark:bg-stone-800 px-3 py-1 rounded-full">
+            {saveStatus === 'Saving...' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1 text-emerald-500" />}
+            {saveStatus}
+          </div>
+          <button 
+            onClick={() => setMobileView('ai')}
+            className="text-primary text-sm font-medium hover:underline flex items-center"
+          >
+            <Sparkles className="w-3 h-3 mr-1" />
+            AI Tools
+          </button>
+        </div>
+
+        {/* Sidebar - Note List */}
+        <div className={`w-full md:w-64 h-full md:h-auto border-r-0 md:border-r bg-stone-50/50 dark:bg-stone-900/50 flex-shrink-0 overflow-y-auto flex-col ${mobileView === 'list' ? 'flex' : 'hidden md:flex'}`}>
+          <div className="md:hidden p-4 border-b flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Your Notes</h2>
+            <button 
+              onClick={() => { createNewNote(); setMobileView('editor'); }}
+              className="bg-primary text-primary-foreground px-3 py-1.5 rounded text-sm font-medium"
+            >
+              + New Note
+            </button>
+          </div>
+
           {Object.keys(groupedNotes).map(folder => (
             <div key={folder} className="mb-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-6 mt-4">{folder}</p>
+              <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2 px-6 mt-4">{folder}</p>
               <div className="space-y-1 px-4">
                 {groupedNotes[folder].map((note: Note) => (
                   <button 
@@ -355,19 +392,20 @@ export default function Notes() {
                       setSummary('');
                       setFlashcards([]);
                       setQuizActive(false);
+                      setMobileView('editor');
                     }}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
-                      note.id.toString() === activeNoteId.toString() ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      "w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
+                      note.id.toString() === activeNoteId.toString() ? 'bg-primary/10 text-primary' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-100'
                     )}
                   >
                     <span className="truncate pr-2">{note.title || 'Untitled Note'}</span>
                     <Trash 
                       className={cn(
-                        "w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive",
+                        "w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive",
                         note.id.toString() === activeNoteId.toString() && "opacity-100"
                       )} 
-                      onClick={(e) => deleteNote(note.id.toString(), e)}
+                      onClick={(e) => { e.stopPropagation(); deleteNote(note.id.toString(), e); }}
                     />
                   </button>
                 ))}
@@ -377,11 +415,11 @@ export default function Notes() {
         </div>
 
         {/* Editor / Preview */}
-        <div className="flex-1 flex flex-col lg:flex-row relative min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x">
+        <div className={`flex-1 flex-col relative min-h-0 overflow-hidden ${mobileView === 'editor' ? 'flex' : 'hidden md:flex'}`}>
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {quizActive ? (
-              <div className="w-full h-full p-8 overflow-y-auto flex flex-col items-center justify-center">
-                <div className="max-w-2xl w-full bg-card border rounded-2xl shadow-sm p-8">
+              <div className="w-full h-full p-4 md:p-8 overflow-y-auto flex flex-col items-center justify-center bg-stone-50/30 dark:bg-stone-900/30">
+                <div className="max-w-2xl w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-sm p-6 md:p-8">
                   {quizScore && currentQuestionIndex === quizQuestions.length - 1 && showExplanation ? (
                     <div className="text-center py-12">
                       <h2 className="text-3xl font-bold mb-4">Quiz Complete!</h2>
@@ -403,11 +441,11 @@ export default function Notes() {
                           const isCorrect = opt === quizQuestions[currentQuestionIndex].correctAnswer;
                           const showStatus = showExplanation;
                           
-                          let bg = 'bg-background hover:border-primary/50';
+                          let bg = 'bg-stone-50 dark:bg-stone-900 hover:border-primary/50';
                           if (showStatus) {
                             if (isCorrect) bg = 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400';
                             else if (isSelected) bg = 'bg-destructive/10 border-destructive/50 text-destructive';
-                            else bg = 'bg-background opacity-50';
+                            else bg = 'bg-stone-50 dark:bg-stone-900 opacity-50';
                           } else if (isSelected) {
                             bg = 'bg-primary/10 border-primary';
                           }
@@ -417,7 +455,7 @@ export default function Notes() {
                               key={i}
                               disabled={showExplanation}
                               onClick={() => handleAnswerSubmit(opt)}
-                              className={cn("w-full text-left p-4 rounded-xl border transition-all duration-200 font-medium", bg)}
+                              className={cn("w-full text-left p-4 rounded-xl border border-stone-200 dark:border-stone-800 transition-all duration-200 font-medium", bg)}
                             >
                               {opt}
                             </button>
@@ -427,7 +465,7 @@ export default function Notes() {
                       
                       {showExplanation && (
                         <div className="mt-8 animate-in fade-in slide-in-from-bottom-4">
-                          <div className="bg-muted p-5 rounded-xl text-sm leading-relaxed mb-6 border">
+                          <div className="bg-stone-50 dark:bg-stone-900 p-5 rounded-xl text-sm leading-relaxed mb-6 border border-stone-200 dark:border-stone-800">
                             <span className="font-semibold block mb-2">Explanation:</span>
                             {quizQuestions[currentQuestionIndex].explanation}
                           </div>
@@ -444,13 +482,13 @@ export default function Notes() {
                 </div>
               </div>
             ) : isEditing ? (
-              <div className="w-full h-full flex flex-col min-h-0">
-                <div className="px-4 md:px-8 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+              <div className="w-full h-full flex flex-col min-h-0 bg-white dark:bg-stone-950">
+                <div className="px-4 md:px-8 pt-4 md:pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
                   <input 
                     type="text"
                     value={activeNote.folder || ''}
                     onChange={(e) => setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, folder: e.target.value } : n))}
-                    className="w-full sm:w-1/3 px-3 py-1.5 text-sm font-medium bg-muted/50 border rounded-md outline-none focus:border-primary/50 transition-colors"
+                    className="w-full sm:w-1/3 px-3 py-2 text-sm font-medium bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md outline-none focus:border-primary/50 transition-colors"
                     placeholder="Folder (e.g., Physics)"
                   />
                   <input 
@@ -460,108 +498,134 @@ export default function Notes() {
                       const tagsArray = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
                       setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, tags: tagsArray as any } : n));
                     }}
-                    className="flex-1 px-3 py-1.5 text-sm bg-muted/50 border rounded-md outline-none focus:border-primary/50 transition-colors"
+                    className="w-full sm:flex-1 px-3 py-2 text-sm bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-md outline-none focus:border-primary/50 transition-colors"
                     placeholder="Tags (comma separated)"
                   />
+                  <button 
+                    onClick={() => setIsEditing(false)}
+                    className="md:hidden w-full border border-stone-200 bg-white text-stone-800 px-4 py-2 rounded-md font-medium text-sm mt-2"
+                  >
+                    Preview Note
+                  </button>
                 </div>
                 <input 
                   type="text"
                   value={activeNote.title}
                   onChange={(e) => setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, title: e.target.value } : n))}
-                  className="w-full px-8 pb-4 text-3xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/30"
+                  className="w-full px-4 md:px-8 pb-4 text-2xl md:text-3xl font-bold bg-transparent outline-none placeholder:text-stone-300 dark:placeholder:text-stone-700 text-stone-800 dark:text-stone-100"
                   placeholder="Note Title..."
                 />
                 <textarea
-                  className="w-full flex-1 px-4 md:px-8 pb-8 resize-none bg-transparent outline-none font-mono text-sm leading-relaxed overflow-y-auto"
+                  className="w-full flex-1 px-4 md:px-8 pb-8 resize-none bg-transparent outline-none font-mono text-[15px] leading-relaxed overflow-y-auto text-stone-700 dark:text-stone-300 placeholder:text-stone-300 dark:placeholder:text-stone-600"
                   value={activeNote.content}
                   onChange={(e) => updateActiveNoteContent(e.target.value)}
                   placeholder="Start typing your notes here..."
                 />
               </div>
             ) : (
-              <div className="w-full h-full p-4 md:p-8 overflow-y-auto min-h-0">
+              <div className="w-full h-full p-6 md:p-8 overflow-y-auto min-h-0 bg-white dark:bg-stone-950">
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  className="md:hidden w-full border border-stone-200 bg-white text-stone-800 px-4 py-2 rounded-md font-medium text-sm mb-6 shadow-sm"
+                >
+                  Edit Note
+                </button>
                 <div className="mb-8">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <span className="text-xs font-semibold px-2 py-1 bg-primary/10 text-primary rounded-md">{activeNote.folder || 'General'}</span>
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-primary/10 text-primary rounded-md">{activeNote.folder || 'General'}</span>
                     {Array.isArray(activeNote.tags) && activeNote.tags.map((tag: string) => (
-                      <span key={tag} className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">#{tag}</span>
+                      <span key={tag} className="text-xs text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-md">#{tag}</span>
                     ))}
                   </div>
-                  <h2 className="text-4xl font-bold tracking-tight">{activeNote.title || 'Untitled Note'}</h2>
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-stone-800 dark:text-stone-100">{activeNote.title || 'Untitled Note'}</h2>
                 </div>
-                <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-headings:font-semibold prose-a:text-primary">
+                <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:text-stone-800 dark:prose-headings:text-stone-100 prose-p:text-stone-600 dark:prose-p:text-stone-300 prose-a:text-primary">
                   <Markdown>{activeNote.content}</Markdown>
                 </div>
               </div>
             )}
           </div>
-          
-          {/* AI Sidebar */}
-          <div className="w-full lg:w-80 h-[35vh] lg:h-auto bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
-            <h3 className="font-semibold mb-6 flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>AI Tools</span>
-            </h3>
-            
-            <div className="space-y-3 mb-8">
-              <button 
-                onClick={handleGenerateSummary}
-                disabled={isGenerating || !activeNote.content.trim()}
-                className="w-full border bg-background text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
-              >
-                Summarize Note
-              </button>
-              <button 
-                onClick={handleGenerateFlashcards}
-                disabled={isGenerating || !activeNote.content.trim()}
-                className="w-full border bg-background text-sm font-medium py-2 rounded-lg hover:border-primary/50 transition-colors disabled:opacity-50"
-              >
-                Generate Flashcards
-              </button>
-              <button 
-                onClick={handleGenerateQuiz}
-                disabled={isGenerating || !activeNote.content.trim()}
-                className="w-full bg-primary text-primary-foreground text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
-              >
-                Take AI Quiz
-              </button>
-              <button 
-                onClick={handleCompileDNA}
-                disabled={isGenerating || !activeNote.content.trim()}
-                className="w-full bg-purple-600 text-white text-sm font-medium py-2.5 rounded-lg hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 flex items-center justify-center space-x-2 mt-4"
-              >
-                <span>Compile Knowledge DNA</span>
-              </button>
-            </div>
-
-            {isGenerating && (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                <p className="text-sm">AI is thinking...</p>
-              </div>
-            )}
-
-            {!isGenerating && summary && (
-              <div className="bg-primary/5 border-primary/20 border p-4 rounded-xl text-sm leading-relaxed">
-                <p className="font-semibold text-primary mb-2">Summary</p>
-                {summary}
-              </div>
-            )}
-
-            {!isGenerating && flashcards.length > 0 && (
-              <div className="space-y-4">
-                <p className="font-semibold text-primary">Generated Flashcards</p>
-                {flashcards.map((fc, i) => (
-                  <div key={i} className="bg-card border p-4 rounded-xl shadow-sm">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Front</p>
-                    <p className="text-sm font-medium mb-3">{fc.front}</p>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wider">Back</p>
-                    <p className="text-sm">{fc.back}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+        </div>
+        
+        {/* AI Sidebar */}
+        <div className={`w-full md:w-80 h-full md:h-auto border-l-0 md:border-l border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50 p-5 md:p-6 flex-col flex-shrink-0 overflow-y-auto ${mobileView === 'ai' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="md:hidden p-1 mb-6 flex items-center justify-between border-b pb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-stone-800">
+              <Sparkles className="w-5 h-5 text-primary" />
+              AI Tools
+            </h2>
+            <button 
+              onClick={() => setMobileView('editor')}
+              className="text-primary text-sm font-medium hover:underline"
+            >
+              Close
+            </button>
           </div>
+
+          <h3 className="hidden md:flex font-semibold mb-6 items-center space-x-2 text-stone-800 dark:text-stone-200">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span>AI Tools</span>
+          </h3>
+          
+          <div className="space-y-3 mb-8">
+            <button 
+              onClick={handleGenerateSummary}
+              disabled={isGenerating || !activeNote.content.trim()}
+              className="w-full border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-sm font-medium py-2.5 rounded-xl hover:border-primary/50 transition-colors disabled:opacity-50 shadow-sm"
+            >
+              Summarize Note
+            </button>
+            <button 
+              onClick={handleGenerateFlashcards}
+              disabled={isGenerating || !activeNote.content.trim()}
+              className="w-full border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-sm font-medium py-2.5 rounded-xl hover:border-primary/50 transition-colors disabled:opacity-50 shadow-sm"
+            >
+              Generate Flashcards
+            </button>
+            <button 
+              onClick={handleGenerateQuiz}
+              disabled={isGenerating || !activeNote.content.trim()}
+              className="w-full bg-primary text-primary-foreground text-sm font-medium py-3 rounded-xl hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 mt-2"
+            >
+              Take AI Quiz
+            </button>
+            <button 
+              onClick={handleCompileDNA}
+              disabled={isGenerating || !activeNote.content.trim()}
+              className="w-full bg-purple-600 text-white text-sm font-medium py-3 rounded-xl hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50 flex items-center justify-center space-x-2 mt-4"
+            >
+              <span>Compile Knowledge DNA</span>
+            </button>
+          </div>
+
+          {isGenerating && (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="w-8 h-8 animate-spin mb-4 text-primary" />
+              <p className="text-sm font-medium">AI is thinking...</p>
+            </div>
+          )}
+
+          {!isGenerating && summary && (
+            <div className="bg-primary/5 border-primary/20 border p-5 rounded-xl text-sm leading-relaxed shadow-sm">
+              <p className="font-semibold text-primary mb-2 flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Summary</p>
+              <p className="text-stone-700 dark:text-stone-300">{summary}</p>
+            </div>
+          )}
+
+          {!isGenerating && flashcards.length > 0 && (
+            <div className="space-y-4">
+              <p className="font-semibold text-primary flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> Flashcards</p>
+              {flashcards.map((fc, i) => (
+                <div key={i} className="bg-white dark:bg-stone-950 border border-stone-200 dark:border-stone-800 p-5 rounded-xl shadow-sm">
+                  <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-1.5 uppercase tracking-wider">Front</p>
+                  <p className="text-sm font-semibold mb-4 text-stone-800 dark:text-stone-200">{fc.front}</p>
+                  <div className="h-px w-full bg-stone-100 dark:bg-stone-800 mb-4"></div>
+                  <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 mb-1.5 uppercase tracking-wider">Back</p>
+                  <p className="text-sm text-stone-600 dark:text-stone-400">{fc.back}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
