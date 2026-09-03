@@ -31,6 +31,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
+      - name: Auto-increment Version Code
+        run: |
+          npm version 1.0.${{ github.run_number }} --no-git-tag-version
+          sed -i "s/versionCode .*/versionCode ${{ github.run_number }}/g" android/app/build.gradle
+          sed -i "s/versionName .*/versionName \"1.0.${{ github.run_number }}\"/g" android/app/build.gradle
+
       - name: Build Web Assets
         run: npm run build
 
