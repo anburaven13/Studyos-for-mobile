@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, Bot, User, Send, Loader2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 
@@ -136,7 +138,7 @@ export default function Workspace() {
                     msg.content
                   ) : (
                     <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:border prose-pre:border-border">
-                      <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                      <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</Markdown>
                     </div>
                   )}
                 </div>

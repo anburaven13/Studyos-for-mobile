@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './lib/AuthContext';
 import AppLayout from './components/layout/AppLayout';
@@ -16,9 +16,6 @@ const Planner = React.lazy(() => import('./pages/Planner'));
 const Tutor = React.lazy(() => import('./pages/Tutor'));
 const ExamHub = React.lazy(() => import('./pages/ExamHub'));
 const Workspace = React.lazy(() => import('./pages/Workspace'));
-const Landing = React.lazy(() => import('./pages/Landing'));
-const FAQ = React.lazy(() => import('./pages/FAQ'));
-const Support = React.lazy(() => import('./pages/Support'));
 const Routines = React.lazy(() => import('./pages/Routines'));
 const Genome = React.lazy(() => import('./pages/Genome'));
 const Settings = React.lazy(() => import('./pages/Settings'));
@@ -45,9 +42,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/onboarding" element={<Onboarding />} />
               
-              <Route path="/" element={<Landing />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/support" element={<Support />} />
+              <Route path="/" element={<Navigate to="/app" replace />} />
+              
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<Dashboard />} />

@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         />
       )}
       <div className={cn(
-        "w-64 border-r border-border/50 bg-white/70 dark:bg-black/70 backdrop-blur-xl backdrop-saturate-150 shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
+        "w-64 border-r border-border/50 bg-background/80 backdrop-blur-2xl backdrop-saturate-150 shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
         <div className="h-16 flex items-center px-6 border-b relative">
@@ -54,29 +54,30 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           <NavLink
             key={item.to}
             to={item.to}
+            end={item.to === '/app'}
             className={({ isActive }) =>
               cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary/10 text-primary shadow-[inset_2px_0_0_0_hsl(var(--primary))]" 
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               )
             }
           >
-            <item.icon className="w-4 h-4" />
+            <item.icon className={cn("w-4 h-4", "transition-colors duration-200")} />
             <span>{item.label}</span>
           </NavLink>
         ))}
 
-        <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-2">Help & Support</p>
+        <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-8 mb-3">Help & Support</p>
         <NavLink
           to="/faq"
           className={({ isActive }) =>
             cn(
-              "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               isActive 
-                ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-primary/10 text-primary shadow-[inset_2px_0_0_0_hsl(var(--primary))]" 
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             )
           }
         >
@@ -87,10 +88,10 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           to="/support"
           className={({ isActive }) =>
             cn(
-              "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+              "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               isActive 
-                ? "bg-primary text-primary-foreground" 
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-primary/10 text-primary shadow-[inset_2px_0_0_0_hsl(var(--primary))]" 
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             )
           }
         >

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2, Trash2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
@@ -20,7 +22,12 @@ export default function Tutor() {
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('tutor_messages');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(saved); 
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (e) {}
     }
     return [
       { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
@@ -179,6 +186,8 @@ export default function Tutor() {
                   className="w-full p-2.5 bg-background border rounded-lg text-sm outline-none focus:border-primary"
                 >
                   <option value="auto">Auto (Smart Fallback Selection)</option>
+                  <option value="gemini-3.8-flash">Gemini 3.8 Flash (High)</option>
+                  <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
                   <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                   <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                   <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
@@ -225,7 +234,7 @@ export default function Tutor() {
                   </div>
                 ) : (
                   <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-black/50 prose-pre:border prose-pre:border-border">
-                    <Markdown remarkPlugins={[remarkGfm]}>{msg.content}</Markdown>
+                    <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</Markdown>
                   </div>
                 )}
               </div>
