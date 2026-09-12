@@ -16,6 +16,8 @@ const Planner = React.lazy(() => import('./pages/Planner'));
 const Tutor = React.lazy(() => import('./pages/Tutor'));
 const ExamHub = React.lazy(() => import('./pages/ExamHub'));
 const Workspace = React.lazy(() => import('./pages/Workspace'));
+const FAQ = React.lazy(() => import('./pages/FAQ'));
+const Support = React.lazy(() => import('./pages/Support'));
 const Routines = React.lazy(() => import('./pages/Routines'));
 const Genome = React.lazy(() => import('./pages/Genome'));
 const Settings = React.lazy(() => import('./pages/Settings'));
@@ -43,6 +45,8 @@ function App() {
               <Route path="/onboarding" element={<Onboarding />} />
               
               <Route path="/" element={<Navigate to="/app" replace />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/support" element={<Support />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
