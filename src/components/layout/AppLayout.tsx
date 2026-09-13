@@ -22,7 +22,7 @@ export default function AppLayout() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-foreground flex flex-col md:flex-row relative selection:bg-primary/30">
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row relative selection:bg-primary/30">
       {/* Premium Glass Background - High-Intensity Ambient Lights */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px]"></div>
