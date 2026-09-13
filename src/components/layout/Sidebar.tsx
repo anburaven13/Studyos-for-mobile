@@ -31,12 +31,12 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm" 
           onClick={onClose}
         />
-      )}
+        )}
       <div className={cn(
-        "w-64 border-r border-border/50 bg-background/80 backdrop-blur-2xl backdrop-saturate-150 shadow-[4px_0_24px_rgba(0,0,0,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
+        "w-64 border-r border-white/[0.05] bg-white/[0.02] dark:bg-black/[0.2] backdrop-blur-[40px] backdrop-saturate-[1.5] shadow-[inset_1px_0_0_rgba(255,255,255,0.02)] h-screen flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
-        <div className="h-16 flex items-center px-6 border-b relative">
+        <div className="h-16 flex items-center px-6 border-b border-white/[0.05] relative">
           <span className="font-bold text-lg tracking-tight flex items-center space-x-2">
             <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs">S</div>
             <span>StudyOS</span>
