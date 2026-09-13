@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Calendar, Clock, FileText, CheckCircle2, BarChart2, Loader2 } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface Task {
   id: string;
@@ -125,40 +126,46 @@ export default function Dashboard() {
               <span>Study Analytics (Past 7 Days)</span>
             </h2>
           </div>
-          <div className="h-48 flex items-end justify-between space-x-2 px-2 pt-4 border-b relative" aria-live="polite">
+          <div className="h-64 w-full pt-4 relative" aria-live="polite">
             {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm z-10">
+              <div className="absolute inset-0 flex items-center justify-center bg-card/50 backdrop-blur-sm z-10 rounded-xl">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
-                <span className="sr-only">Loading analytics…</span>
+                <span className="sr-only">Loading analytics...</span>
               </div>
             ) : null}
             {!isLoading && studySessions.length === 0 ? (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm border-b">
                 No study data for the past 7 days. Start the timer to log your sessions!
               </div>
             ) : (
-              studySessions.map((session, i) => {
-                const maxMins = Math.max(...studySessions.map(s => parseInt(s.total_minutes as any) || 0));
-                const heightPercent = maxMins > 0 ? ((parseInt(session.total_minutes as any) || 0) / maxMins) * 100 : 0;
-                
-                return (
-                  <div key={i} className="flex flex-col items-center flex-1 group">
-                    <div 
-                      className="w-full bg-primary/20 hover:bg-primary/40 focus-visible:bg-primary/40 focus-visible:ring-2 focus-visible:ring-primary rounded-t-sm relative transition-[background-color,shadow] duration-300 group-hover:shadow-md outline-none cursor-default" 
-                      style={{ height: `${heightPercent}%`, minHeight: '4px' }}
-                      tabIndex={0}
-                      aria-label={`${session.total_minutes} minutes studied on ${new Date(session.date).toLocaleDateString()}`}
-                    >
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity bg-foreground text-background text-xs px-2 py-1 rounded shadow-xl whitespace-nowrap z-10 pointer-events-none">
-                        {session.total_minutes}&nbsp;mins
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground mt-2 truncate w-full text-center">
-                      {new Date(session.date).toLocaleDateString(undefined, { weekday: 'short' })}
-                    </span>
-                  </div>
-                );
-              })
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart 
+                  data={studySessions.map(s => ({
+                    day: new Date(s.date).toLocaleDateString(undefined, { weekday: 'short' }),
+                    fullDate: new Date(s.date).toLocaleDateString(),
+                    minutes: parseInt(s.total_minutes as any) || 0
+                  }))} 
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorMinutes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.5}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" strokeOpacity={0.2} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
+                    labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+                    formatter={(value: number) => [`${value} mins`, 'Study Time']}
+                    labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
+                  />
+                  <Area type="monotone" dataKey="minutes" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorMinutes)" activeDot={{ r: 6, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>
