@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import Footer from '../components/layout/Footer';
+
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { Mail, MessageCircle, HelpCircle, ArrowRight, Brain } from 'lucide-react';
 
@@ -105,7 +105,7 @@ export default function Support() {
         </main>
 
         <div className="border-t border-white/10 bg-black/50 backdrop-blur-md">
-          <Footer />
+          
         </div>
       </div>
     </div>

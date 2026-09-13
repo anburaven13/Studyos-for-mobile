@@ -160,7 +160,7 @@ export default function Dashboard() {
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' }}
                     itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 'bold' }}
                     labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
-                    formatter={(value: number) => [`${value} mins`, 'Study Time']}
+                    formatter={(value: any) => [`${value} mins`, 'Study Time']}
                     labelFormatter={(label, payload) => payload?.[0]?.payload?.fullDate || label}
                   />
                   <Area type="monotone" dataKey="minutes" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorMinutes)" activeDot={{ r: 6, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
