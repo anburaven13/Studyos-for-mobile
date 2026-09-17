@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BookOpen, Calendar, Clock, FileText, CheckCircle2, BarChart2, Loader2 } from 'lucide-react';
 import { TextEffect } from '@/components/motion-primitives/text-effect';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -53,6 +53,32 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [studySessions, setStudySessions] = useState<{date: string, total_minutes: number}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Generate continuous 7 day data ending today to fix missing date gaps in graph
+  const chartData = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      
+      const session = studySessions.find(s => {
+        const sDate = new Date(s.date);
+        return sDate.getFullYear() === d.getFullYear() && 
+               sDate.getMonth() === d.getMonth() && 
+               sDate.getDate() === d.getDate();
+      });
+
+      days.push({
+        day: d.toLocaleDateString(undefined, { weekday: 'short' }),
+        fullDate: d.toLocaleDateString(),
+        minutes: session ? parseInt(session.total_minutes as any) || 0 : 0
+      });
+    }
+    return days;
+  }, [studySessions]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -140,11 +166,7 @@ export default function Dashboard() {
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart 
-                  data={studySessions.map(s => ({
-                    day: new Date(s.date).toLocaleDateString(undefined, { weekday: 'short' }),
-                    fullDate: new Date(s.date).toLocaleDateString(),
-                    minutes: parseInt(s.total_minutes as any) || 0
-                  }))} 
+                  data={chartData} 
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
                 >
                   <defs>
