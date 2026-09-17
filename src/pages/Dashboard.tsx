@@ -65,10 +65,15 @@ export default function Dashboard() {
       d.setDate(d.getDate() - i);
       
       const session = studySessions.find(s => {
-        const sDate = new Date(s.date);
-        return sDate.getFullYear() === d.getFullYear() && 
-               sDate.getMonth() === d.getMonth() && 
-               sDate.getDate() === d.getDate();
+        // Timezone-safe comparison: match local day strictly against DB calendar day
+        const sDateString = s.date.split('T')[0];
+        
+        const dYear = d.getFullYear();
+        const dMonth = String(d.getMonth() + 1).padStart(2, '0');
+        const dDay = String(d.getDate()).padStart(2, '0');
+        const dDateString = `${dYear}-${dMonth}-${dDay}`;
+        
+        return sDateString === dDateString;
       });
 
       days.push({
