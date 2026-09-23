@@ -327,7 +327,7 @@ export default function Messages() {
                     <div key={msg.id} className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}>
                       <div className="flex items-center space-x-2 w-full max-w-full">
                         {isMine && (
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity ml-auto">
+                          <div className="opacity-50 hover:opacity-100 flex items-center space-x-1 transition-opacity ml-auto">
                             {msg.mediaUrl && (
                               <button onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} className="p-1.5 hover:bg-white/10 rounded-full text-muted-foreground hover:text-white transition-colors" title="Download Media">
                                 <Download className="w-3.5 h-3.5" />
@@ -354,7 +354,7 @@ export default function Messages() {
                           {msg.text && <p className="text-sm">{msg.text}</p>}
                         </div>
                         {!isMine && (
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity mr-auto">
+                          <div className="opacity-50 hover:opacity-100 flex items-center space-x-1 transition-opacity mr-auto">
                             {msg.mediaUrl && (
                               <button onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} className="p-1.5 hover:bg-white/10 rounded-full text-muted-foreground hover:text-white transition-colors" title="Download Media">
                                 <Download className="w-3.5 h-3.5" />
