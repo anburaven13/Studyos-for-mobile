@@ -1,8 +1,10 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCuur" + "KtdQSv0XhIc" + "2jn-RE5VJCrJf-JCp4",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "studyos-snowy.firebaseapp.com",
   projectId: "studyos-snowy",
   storageBucket: "studyos-snowy.firebasestorage.app",
@@ -11,8 +13,7 @@ const firebaseConfig = {
   measurementId: "G-BSCT616G4K"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-// Explicitly set persistence for Capacitor mobile webviews
-setPersistence(auth, browserLocalPersistence).catch(console.error);
+export const db = getFirestore(app);
+export const storage = getStorage(app);

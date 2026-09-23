@@ -5,6 +5,7 @@ import StudyTimer from './StudyTimer';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import UsernamePromptModal from './UsernamePromptModal';
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ export default function AppLayout() {
         </AnimatePresence>
       </main>
       <StudyTimer />
+      <UsernamePromptModal />
     </div>
   );
 }

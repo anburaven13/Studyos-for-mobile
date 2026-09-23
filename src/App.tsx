@@ -21,6 +21,7 @@ const Support = React.lazy(() => import('./pages/Support'));
 const Routines = React.lazy(() => import('./pages/Routines'));
 const Genome = React.lazy(() => import('./pages/Genome'));
 const Settings = React.lazy(() => import('./pages/Settings'));
+const Messages = React.lazy(() => import('./pages/Messages'));
 
 // A simple loading fallback
 const PageLoader = () => (
@@ -58,6 +59,7 @@ function App() {
                   <Route path="exams" element={<ExamHub />} />
                   <Route path="routines" element={<Routines />} />
                   <Route path="workspace" element={<Workspace />} />
+                  <Route path="messages" element={<Messages />} />
                   <Route path="genome" element={<Genome />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>

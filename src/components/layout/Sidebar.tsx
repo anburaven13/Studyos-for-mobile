@@ -14,6 +14,7 @@ const navItems = [
   { icon: GraduationCap, label: 'AI Tutor', to: '/app/tutor' },
   { icon: FileText, label: 'Workspace', to: '/app/workspace' },
   { icon: ClipboardList, label: 'Exam Hub', to: '/app/exams' },
+  { icon: MessageCircle, label: 'Messages', to: '/app/messages' },
 ];
 
 type SidebarProps = {
