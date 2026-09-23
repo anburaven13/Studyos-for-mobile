@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 export default function Messages() {
   const { user, token } = useAuth();
   const [friends, setFriends] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [activeFriend, setActiveFriend] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -18,27 +19,44 @@ export default function Messages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // 1. Fetch Friends
+  // 1. Fetch Friends and Pending Requests
   useEffect(() => {
     if (!user?.uid) return;
     
-    const q = query(
+    // Fetch Accepted Friends
+    const qFriends = query(
       collection(db, 'friendships'),
       where('users', 'array-contains', user.uid),
       where('status', '==', 'accepted')
     );
     
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeFriends = onSnapshot(qFriends, (snapshot) => {
       const f = snapshot.docs.map(doc => {
         const data = doc.data();
-        // Determine the other user's ID
         const friendId = data.users.find((id: string) => id !== user.uid);
         return { id: doc.id, friendId, ...data };
       });
       setFriends(f);
     });
+
+    // Fetch Pending Requests sent TO the user
+    const qPending = query(
+      collection(db, 'friendships'),
+      where('users', 'array-contains', user.uid),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribePending = onSnapshot(qPending, (snapshot) => {
+      const p = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((req: any) => req.requester !== user.uid); // Only show requests from others
+      setPendingRequests(p);
+    });
     
-    return () => unsubscribe();
+    return () => {
+      unsubscribeFriends();
+      unsubscribePending();
+    };
   }, [user?.uid]);
 
   // 2. Fetch Messages for Active Friend
@@ -82,6 +100,18 @@ export default function Messages() {
         body: JSON.stringify({ targetUsername })
       });
       alert('Friend request sent!');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const acceptFriendRequest = async (friendshipId: string) => {
+    try {
+      await fetch('/api/friends/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ friendshipId })
+      });
     } catch (err) {
       console.error(err);
     }
@@ -174,7 +204,9 @@ export default function Messages() {
         <div className="p-4 border-b border-white/10">
           <h2 className="text-xl font-bold mb-4">Messages</h2>
           <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+            <button type="submit" className="absolute left-3 top-2.5 z-10 text-muted-foreground hover:text-white transition-colors">
+              <Search className="w-4 h-4" />
+            </button>
             <input 
               type="text" 
               placeholder="Find friends by @username..."
@@ -200,6 +232,28 @@ export default function Messages() {
             </div>
           ) : (
             <div>
+              {pendingRequests.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-xs font-semibold text-primary uppercase mb-2">Friend Requests ({pendingRequests.length})</p>
+                  {pendingRequests.map(req => (
+                    <div key={req.id} className="flex items-center justify-between p-3 bg-primary/10 rounded-lg mb-2 border border-primary/20">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                          {req.requester.substring(0,2)}
+                        </div>
+                        <span className="text-sm font-medium">User {req.requester.substring(0,4)}</span>
+                      </div>
+                      <button 
+                        onClick={() => acceptFriendRequest(req.id)} 
+                        className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full hover:bg-primary/90 transition-colors"
+                      >
+                        Accept
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Friends</p>
               {friends.length === 0 ? (
                 <div className="text-center p-8 text-sm text-muted-foreground">
