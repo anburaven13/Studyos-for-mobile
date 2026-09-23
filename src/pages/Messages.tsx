@@ -414,6 +414,10 @@ export default function Messages() {
                 </button>
               </form>
             </div>
+            
+            <div className="px-4 pb-3 pt-1 text-[10px] text-muted-foreground/70 text-center flex items-center justify-center space-x-1 bg-black/40 backdrop-blur-md">
+              <span><strong>Notice:</strong> All media attachments are automatically deleted after 1 month to save space. Please download important files.</span>
+            </div>
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-8 text-center relative">
