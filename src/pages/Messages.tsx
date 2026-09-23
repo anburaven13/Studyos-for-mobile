@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { db, storage } from '../lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { collection, query, where, onSnapshot, orderBy, doc, addDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { Search, UserPlus, Send, Paperclip, Video, File, Mic, MessageCircle, Image as ImageIcon, Check, Loader2 } from 'lucide-react';
+import { collection, query, where, onSnapshot, orderBy, doc, addDoc, serverTimestamp, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { Search, UserPlus, Send, Paperclip, Video, File, Mic, MessageCircle, Image as ImageIcon, Check, Loader2, Trash2, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Messages() {
@@ -141,6 +141,23 @@ export default function Messages() {
       setNewMessage('');
     } catch (err) {
       console.error('Failed to send message', err);
+    }
+  };
+
+  const deleteMessage = async (msg: any) => {
+    if (!user?.uid || msg.senderId !== user.uid) return;
+    
+    try {
+      if (msg.mediaUrl) {
+        await fetch('/api/cloudinary/delete', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ mediaUrl: msg.mediaUrl })
+        });
+      }
+      await deleteDoc(doc(db, 'messages', msg.id));
+    } catch (err) {
+      console.error('Failed to delete message', err);
     }
   };
 
@@ -307,21 +324,44 @@ export default function Messages() {
                 messages.map(msg => {
                   const isMine = msg.senderId === user?.uid;
                   return (
-                    <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${isMine ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-white/10 rounded-tl-sm'}`}>
-                        {msg.mediaUrl && (
-                          <div className="mb-2">
-                            {msg.mediaType === 'image' && <img src={msg.mediaUrl} alt="attachment" className="rounded-lg max-h-60 object-contain" />}
-                            {msg.mediaType === 'video' && <video src={msg.mediaUrl} controls className="rounded-lg max-h-60" />}
-                            {msg.mediaType === 'audio' && <audio src={msg.mediaUrl} controls className="w-full max-w-[200px]" />}
-                            {msg.mediaType === 'pdf' && (
-                              <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center space-x-2 text-sm underline">
-                                <File className="w-4 h-4" /> <span>View Document</span>
-                              </a>
+                    <div key={msg.id} className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}>
+                      <div className="flex items-center space-x-2 w-full max-w-full">
+                        {isMine && (
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity ml-auto">
+                            {msg.mediaUrl && (
+                              <button onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} className="p-1.5 hover:bg-white/10 rounded-full text-muted-foreground hover:text-white transition-colors" title="Download Media">
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button onClick={() => deleteMessage(msg)} className="p-1.5 hover:bg-red-500/20 rounded-full text-muted-foreground hover:text-red-500 transition-colors" title="Unsend Message">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${isMine ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-white/10 rounded-tl-sm mr-auto'}`}>
+                          {msg.mediaUrl && (
+                            <div className="mb-2">
+                              {msg.mediaType === 'image' && <img src={msg.mediaUrl} alt="attachment" className="rounded-lg max-h-60 object-contain" />}
+                              {msg.mediaType === 'video' && <video src={msg.mediaUrl} controls className="rounded-lg max-h-60" />}
+                              {msg.mediaType === 'audio' && <audio src={msg.mediaUrl} controls className="w-full max-w-[200px]" />}
+                              {msg.mediaType === 'pdf' && (
+                                <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center space-x-2 text-sm underline">
+                                  <File className="w-4 h-4" /> <span>View Document</span>
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {msg.text && <p className="text-sm">{msg.text}</p>}
+                        </div>
+                        {!isMine && (
+                          <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity mr-auto">
+                            {msg.mediaUrl && (
+                              <button onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} className="p-1.5 hover:bg-white/10 rounded-full text-muted-foreground hover:text-white transition-colors" title="Download Media">
+                                <Download className="w-3.5 h-3.5" />
+                              </button>
                             )}
                           </div>
                         )}
-                        {msg.text && <p className="text-sm">{msg.text}</p>}
                       </div>
                       <span className="text-[10px] text-muted-foreground mt-1">
                         {(() => {
