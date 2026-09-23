@@ -65,12 +65,20 @@ export default function Messages() {
     
     const q = query(
       collection(db, 'messages'),
-      where('friendshipId', '==', activeFriend.id),
-      orderBy('timestamp', 'asc')
+      where('friendshipId', '==', activeFriend.id)
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Sort in memory to avoid needing a Firestore composite index
+      msgs.sort((a: any, b: any) => {
+        const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+        const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+        return timeA - timeB;
+      });
+      
+      setMessages(msgs);
       // Auto-scroll to bottom
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     });
@@ -128,7 +136,7 @@ export default function Messages() {
         text,
         mediaUrl,
         mediaType,
-        timestamp: serverTimestamp()
+        timestamp: new Date().toISOString()
       });
       setNewMessage('');
     } catch (err) {
@@ -316,7 +324,11 @@ export default function Messages() {
                         {msg.text && <p className="text-sm">{msg.text}</p>}
                       </div>
                       <span className="text-[10px] text-muted-foreground mt-1">
-                        {msg.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {(() => {
+                          if (!msg.timestamp) return '';
+                          const dateObj = msg.timestamp.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp);
+                          return dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        })()}
                       </span>
                     </div>
                   );
