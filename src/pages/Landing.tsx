@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import liquidGL from 'liquid-gl';
 
 const FadeInUp = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -169,6 +170,29 @@ const Marquee = () => {
 };
 
 const Hero = () => {
+  useEffect(() => {
+    // Initialize liquidGL on the glass target
+    const glass = liquidGL({
+      target: '.hero-glass',
+      engine: 'auto',
+      snapshot: 'body',
+      refraction: 0.15,
+      aberration: 0.4,
+      bevelDepth: 0.1,
+      bevelWidth: 0.1,
+      frost: 2,
+      shadow: true,
+      specular: true,
+      tint: 'rgba(255, 255, 255, 0.05)',
+      interaction: 'fluid',
+      interactionStrength: 1.5,
+      reveal: 'fade'
+    });
+    return () => {
+      if (glass && typeof glass.destroy === 'function') glass.destroy();
+    };
+  }, []);
+
   return (
     <section id="about" className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 relative z-0">
       <video
@@ -182,35 +206,40 @@ const Hero = () => {
       </video>
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black -z-10" />
 
-      <FadeInUp>
-        <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 mb-8 backdrop-blur-sm mx-auto w-max">
-          ✨ Announcing StudyOS 2.0
+      {/* The Glass Pane */}
+      <div className="hero-glass rounded-[40px] p-8 md:p-16 max-w-5xl mx-4 border border-white/10 shadow-2xl z-10 relative">
+        <div className="content relative z-20 flex flex-col items-center">
+          <FadeInUp>
+            <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 mb-8 backdrop-blur-sm mx-auto w-max">
+              ✨ Announcing StudyOS 2.0
+            </div>
+          </FadeInUp>
+
+          <FadeInUp delay={100}>
+            <h1 className="text-5xl md:text-7xl font-medium tracking-tight mb-6 text-center max-w-4xl mx-auto px-4 drop-shadow-md">
+              Crush your exams with <br className="hidden md:block" />
+              an AI tutor that <span className="font-serif italic font-normal text-white">knows you.</span>
+            </h1>
+          </FadeInUp>
+
+          <FadeInUp delay={200}>
+            <p className="text-[16px] text-gray-200 max-w-2xl text-center mx-auto mb-10 px-4 drop-shadow-md leading-relaxed">
+              <strong className="text-white">What is StudyOS?</strong> StudyOS is an AI-powered study planner and homework tracker designed for students. Upload your messy notes, PDFs, and deadlines, and our system automatically organizes your homework, tracks your weak points, and acts as your personal 24/7 tutor.
+            </p>
+          </FadeInUp>
+
+          <FadeInUp delay={300}>
+            <div className="flex flex-row items-center gap-4">
+              <Link to="/login" className="bg-white text-black hover:bg-gray-100 px-6 py-3 rounded-full text-sm font-medium transition-colors inline-block shadow-lg">
+                Start for Free
+              </Link>
+              <a href="#features" className="bg-black/50 text-white border border-white/20 hover:bg-black/70 backdrop-blur-md px-6 py-3 rounded-full text-sm font-medium transition-colors inline-block shadow-lg">
+                Explore Features
+              </a>
+            </div>
+          </FadeInUp>
         </div>
-      </FadeInUp>
-
-      <FadeInUp delay={100}>
-        <h1 className="text-5xl md:text-7xl font-medium tracking-tight mb-6 text-center max-w-4xl mx-auto px-4">
-          Crush your exams with <br className="hidden md:block" />
-          an AI tutor that <span className="font-serif italic font-normal">knows you.</span>
-        </h1>
-      </FadeInUp>
-
-      <FadeInUp delay={200}>
-        <p className="text-[16px] text-gray-400 max-w-2xl text-center mx-auto mb-10 px-4">
-          <strong className="text-gray-200">What is StudyOS?</strong> StudyOS is an AI-powered study planner and homework tracker designed for students. Upload your messy notes, PDFs, and deadlines, and our system automatically organizes your homework, tracks your weak points, and acts as your personal 24/7 tutor.
-        </p>
-      </FadeInUp>
-
-      <FadeInUp delay={300}>
-        <div className="flex flex-row items-center gap-4">
-          <Link to="/login" className="bg-white text-black px-6 py-3 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors inline-block">
-            Start for Free
-          </Link>
-          <a href="#features" className="bg-[#1F1F22] text-white px-6 py-3 rounded-full text-sm font-medium border border-white/5 hover:bg-[#2A2A2D] transition-colors inline-block">
-            Explore Features
-          </a>
-        </div>
-      </FadeInUp>
+      </div>
 
       <FadeInUp delay={400}>
         <Marquee />

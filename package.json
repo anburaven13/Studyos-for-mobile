@@ -37,6 +37,7 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.18.7",
+    "liquid-gl": "^3.0.0",
     "lucide-react": "^1.45.0",
     "mongoose": "^9.11.1",
     "motion": "^13.2.0",
