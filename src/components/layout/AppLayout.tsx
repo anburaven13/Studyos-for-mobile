@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import BottomNav from './BottomNav';
 import StudyTimer from './StudyTimer';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Menu } from 'lucide-react';
@@ -37,14 +36,16 @@ export default function AppLayout() {
 
       <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       
-      <main className="flex-1 md:ml-64 min-h-screen flex flex-col relative z-0 pb-16 md:pb-0">
+      <main className="flex-1 md:ml-64 min-h-screen flex flex-col relative z-0">
         {/* Mobile Header */}
         <div className="md:hidden h-16 border-b border-white/10 flex items-center px-4 justify-between bg-black/40 backdrop-blur-3xl backdrop-saturate-200 z-30 sticky top-0 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
           <span className="font-bold tracking-tight flex items-center space-x-2">
             <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs">S</div>
             <span>StudyOS</span>
           </span>
-          {/* Hamburger moved to BottomNav 'More' */}
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -mr-2">
+            <Menu className="w-6 h-6 text-muted-foreground" />
+          </button>
         </div>
         
         <AnimatePresence mode="wait">
@@ -61,7 +62,6 @@ export default function AppLayout() {
         </AnimatePresence>
       </main>
       <StudyTimer />
-      <BottomNav onMoreClick={() => setIsMobileMenuOpen(true)} />
       <UsernamePromptModal />
     </div>
   );
