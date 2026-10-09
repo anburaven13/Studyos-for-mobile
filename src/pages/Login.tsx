@@ -4,7 +4,6 @@ import { useAuth } from '../lib/AuthContext';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import liquidGL from 'liquid-gl';
 import { useEffect } from 'react';
 
 export default function Login() {
@@ -23,31 +22,6 @@ export default function Login() {
   const { syncUser } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let glass: any;
-    const timer = setTimeout(() => {
-      glass = liquidGL({
-        target: '.login-glass',
-        engine: 'auto',
-        snapshot: 'body',
-        refraction: 0.12,
-        aberration: 0.3,
-        bevelDepth: 0.05,
-        bevelWidth: 0.08,
-        frost: 3,
-        shadow: true,
-        specular: true,
-        tint: 'rgba(20, 20, 25, 0.5)',
-        interaction: 'fluid',
-        interactionStrength: 2.0,
-        reveal: 'fade'
-      });
-    }, 1000);
-    return () => {
-      clearTimeout(timer);
-      if (glass && typeof glass.destroy === 'function') glass.destroy();
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +150,7 @@ export default function Login() {
         >
           <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
         </video>
-        <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+        <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Two-Factor Authentication</h1>
             <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
@@ -238,7 +212,7 @@ export default function Login() {
         >
           <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
         </video>
-        <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+        <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Reset Password</h1>
             <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
@@ -312,7 +286,7 @@ export default function Login() {
       >
         <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
       </video>
-      <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+      <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
         <div className="content relative z-20">
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">

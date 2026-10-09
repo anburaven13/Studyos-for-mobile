@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import liquidGL from 'liquid-gl';
 
 const FadeInUp = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -170,32 +169,6 @@ const Marquee = () => {
 };
 
 const Hero = () => {
-  useEffect(() => {
-    let glass: any;
-    const timer = setTimeout(() => {
-      // Initialize liquidGL on the glass target after video loads
-      glass = liquidGL({
-        target: '.hero-glass',
-        engine: 'auto',
-        snapshot: 'body',
-        refraction: 0.15,
-        aberration: 0.4,
-        bevelDepth: 0.1,
-        bevelWidth: 0.1,
-        frost: 2,
-        shadow: true,
-        specular: true,
-        tint: 'rgba(255, 255, 255, 0.05)',
-        interaction: 'fluid',
-        interactionStrength: 1.5,
-        reveal: 'fade'
-      });
-    }, 1000);
-    return () => {
-      clearTimeout(timer);
-      if (glass && typeof glass.destroy === 'function') glass.destroy();
-    };
-  }, []);
 
   return (
     <section id="about" className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 relative z-0">
@@ -210,7 +183,7 @@ const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black -z-10" />
 
       {/* The Glass Pane */}
-      <div className="hero-glass rounded-[40px] p-8 md:p-16 max-w-5xl mx-4 border border-white/10 shadow-2xl z-10 relative">
+      <div className="bg-[#1C1C1E]/80 backdrop-blur-xl rounded-[40px] p-8 md:p-16 max-w-5xl mx-4 border border-white/10 shadow-2xl z-10 relative">
         <div className="content relative z-20 flex flex-col items-center">
           <FadeInUp>
             <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 mb-8 backdrop-blur-sm mx-auto w-max">
