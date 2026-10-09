@@ -171,32 +171,35 @@ const Marquee = () => {
 
 const Hero = () => {
   useEffect(() => {
-    // Initialize liquidGL on the glass target
-    const glass = liquidGL({
-      target: '.hero-glass',
-      engine: 'auto',
-      snapshot: 'body',
-      refraction: 0.15,
-      aberration: 0.4,
-      bevelDepth: 0.1,
-      bevelWidth: 0.1,
-      frost: 2,
-      shadow: true,
-      specular: true,
-      tint: 'rgba(255, 255, 255, 0.05)',
-      interaction: 'fluid',
-      interactionStrength: 1.5,
-      reveal: 'fade'
-    });
+    let glass: any;
+    const timer = setTimeout(() => {
+      // Initialize liquidGL on the glass target after video loads
+      glass = liquidGL({
+        target: '.hero-glass',
+        engine: 'auto',
+        snapshot: 'body',
+        refraction: 0.15,
+        aberration: 0.4,
+        bevelDepth: 0.1,
+        bevelWidth: 0.1,
+        frost: 2,
+        shadow: true,
+        specular: true,
+        tint: 'rgba(255, 255, 255, 0.05)',
+        interaction: 'fluid',
+        interactionStrength: 1.5,
+        reveal: 'fade'
+      });
+    }, 1000);
     return () => {
+      clearTimeout(timer);
       if (glass && typeof glass.destroy === 'function') glass.destroy();
     };
   }, []);
 
   return (
     <section id="about" className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 relative z-0">
-      <video
-        autoPlay
+      <video crossOrigin="anonymous" autoPlay
         loop
         muted
         playsInline
@@ -362,8 +365,7 @@ const Feature1 = () => {
 
         <FadeInUp delay={200}>
           <div className="rounded-3xl overflow-hidden p-8 border border-white/10 relative h-[500px] flex items-end">
-            <video
-              autoPlay
+            <video crossOrigin="anonymous" autoPlay
               loop
               muted
               playsInline
@@ -408,8 +410,7 @@ const Feature2 = () => {
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         <FadeInUp delay={200}>
           <div className="rounded-3xl overflow-hidden p-8 border border-white/10 relative h-[500px] flex items-center justify-center order-2 lg:order-1">
-            <video
-              autoPlay
+            <video crossOrigin="anonymous" autoPlay
               loop
               muted
               playsInline
@@ -509,8 +510,7 @@ const FAQ = () => {
 const Footer = () => {
   return (
     <footer id="contact" className="relative z-0 pt-32 pb-10 px-6 border-t border-white/5 w-full">
-      <video
-        autoPlay
+      <video crossOrigin="anonymous" autoPlay
         loop
         muted
         playsInline

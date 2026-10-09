@@ -24,23 +24,27 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const glass = liquidGL({
-      target: '.login-glass',
-      engine: 'auto',
-      snapshot: 'body',
-      refraction: 0.12,
-      aberration: 0.3,
-      bevelDepth: 0.05,
-      bevelWidth: 0.08,
-      frost: 3,
-      shadow: true,
-      specular: true,
-      tint: 'rgba(20, 20, 25, 0.5)',
-      interaction: 'fluid',
-      interactionStrength: 2.0,
-      reveal: 'fade'
-    });
+    let glass: any;
+    const timer = setTimeout(() => {
+      glass = liquidGL({
+        target: '.login-glass',
+        engine: 'auto',
+        snapshot: 'body',
+        refraction: 0.12,
+        aberration: 0.3,
+        bevelDepth: 0.05,
+        bevelWidth: 0.08,
+        frost: 3,
+        shadow: true,
+        specular: true,
+        tint: 'rgba(20, 20, 25, 0.5)',
+        interaction: 'fluid',
+        interactionStrength: 2.0,
+        reveal: 'fade'
+      });
+    }, 1000);
     return () => {
+      clearTimeout(timer);
       if (glass && typeof glass.destroy === 'function') glass.destroy();
     };
   }, []);
@@ -164,8 +168,7 @@ export default function Login() {
   if (show2FA) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video
-          autoPlay
+        <video crossOrigin="anonymous" autoPlay
           loop
           muted
           playsInline
@@ -227,8 +230,7 @@ export default function Login() {
   if (showForgot) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video
-          autoPlay
+        <video crossOrigin="anonymous" autoPlay
           loop
           muted
           playsInline
@@ -302,8 +304,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-      <video
-        autoPlay
+      <video crossOrigin="anonymous" autoPlay
         loop
         muted
         playsInline
