@@ -13,6 +13,7 @@ import speakeasy from 'speakeasy';
 import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
 import * as ics from 'ics';
+import { connectMongo, TutorHistory } from './mongo.js';
 
 dotenv.config();
 
@@ -21,6 +22,8 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+connectMongo().catch(console.error);
 
 const getTransporters = () => {
   const transporters = [];
@@ -99,7 +102,7 @@ app.use(helmet({
   hidePoweredBy: true,
 }));
 
-// CRIT-1: Strict CORS — no wildcard in production
+// CRIT-1: Strict CORS â€” no wildcard in production
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'https://studyos-snowy.vercel.app',
   'capacitor://localhost',
@@ -286,9 +289,18 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     
     let userDbIndex = -1;
     let existingUser = null;
-    
-    // 1. OPTIMIZED PATH: Check if the token already contains the DB Index
-    if (decodedToken.dbIndex !== undefined) {
+
+    // EMERGENCY HOTFIX: Force this specific user back to their real DB (DB 0) regardless of claims or fallback
+    if (decodedToken.email === 'keya.ghosh3110@gmail.com') {
+      userDbIndex = 0;
+      try {
+        const users = await dbConnections[0]`SELECT id, email, is_2fa_enabled, verified_auth_times FROM users WHERE email = ${decodedToken.email}`;
+        if (users.length > 0) existingUser = users[0];
+      } catch(e) {
+        console.error("DB 0 hotfix error", e);
+      }
+    } else if (decodedToken.dbIndex !== undefined) {
+      // 1. OPTIMIZED PATH: Check if the token already contains the DB Index
       userDbIndex = decodedToken.dbIndex;
       try {
         // Query ONLY the single database shard!
@@ -331,7 +343,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
       
       // Save this assignment to Firebase so future logins use the Optimized Path!
       try {
-        await firebaseAuth.setCustomUserClaims(decodedToken.uid, { ...decodedToken, dbIndex: userDbIndex });
+        await firebaseAuth.setCustomUserClaims(decodedToken.uid, { dbIndex: userDbIndex });
       } catch (claimErr) {
         console.error('Failed to save dbIndex custom claim', claimErr);
       }
@@ -374,20 +386,96 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   }
 };
 
-app.get('/api/cloudinary/sign', authenticateToken, (req: any, res: any) => {
-  try {
-    const timestamp = Math.round((new Date).getTime() / 1000);
-    const signature = cloudinary.utils.api_sign_request({
-      timestamp: timestamp,
-      folder: 'studyos_chat',
-    }, process.env.CLOUDINARY_API_SECRET!);
+  app.get('/api/cloudinary/sign', authenticateToken, (req: any, res: any) => {
+    try {
+      const timestamp = Math.round((new Date).getTime() / 1000);
+      const signature = cloudinary.utils.api_sign_request({
+        timestamp: timestamp,
+        folder: 'studyos_chat',
+      }, process.env.CLOUDINARY_API_SECRET!);
+  
+      res.json({ timestamp, signature, cloudName: process.env.CLOUDINARY_CLOUD_NAME, apiKey: process.env.CLOUDINARY_API_KEY });
+    } catch (err: any) {
+      console.error('Cloudinary Sign Error:', err);
+      res.status(500).json({ error: 'Failed to sign cloudinary upload' });
+    }
+  });
 
-    res.json({ timestamp, signature, cloudName: process.env.CLOUDINARY_CLOUD_NAME, apiKey: process.env.CLOUDINARY_API_KEY });
-  } catch (err: any) {
-    console.error('Cloudinary Sign Error:', err);
-    res.status(500).json({ error: 'Failed to sign cloudinary upload' });
-  }
-});
+  app.delete('/api/cloudinary/delete', authenticateToken, async (req: any, res: any) => {
+    try {
+      const { mediaUrl } = req.body;
+      if (!mediaUrl || typeof mediaUrl !== 'string') return res.status(400).json({ error: 'mediaUrl required' });
+
+      // Example URL: https://res.cloudinary.com/cloudname/image/upload/v123456/studyos_chat/xyz.jpg
+      const uploadIndex = mediaUrl.indexOf('/upload/');
+      if (uploadIndex === -1) return res.status(400).json({ error: 'Invalid cloudinary url' });
+
+      // Get everything after /upload/
+      const pathAfterUpload = mediaUrl.substring(uploadIndex + 8);
+      // Remove the version tag (e.g., v123456/)
+      const pathWithoutVersion = pathAfterUpload.replace(/^v\d+\//, '');
+      // Remove extension
+      const publicId = pathWithoutVersion.substring(0, pathWithoutVersion.lastIndexOf('.')) || pathWithoutVersion;
+      
+      const resourceType = mediaUrl.includes('/video/') ? 'video' : 'image';
+
+      await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error('Cloudinary Delete Error:', err);
+      res.status(500).json({ error: 'Failed to delete from cloudinary' });
+    }
+  });
+
+  // Cron job to clean up media older than 30 days
+  app.get('/api/cron/cleanup-media', async (req: any, res: any) => {
+    try {
+      if (process.env.CRON_SECRET && req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const cutoffTime = thirtyDaysAgo.getTime();
+
+      const snapshot = await firestore.collection('messages').get();
+      let deletedCount = 0;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (data.mediaUrl && data.timestamp) {
+          const msgTime = new Date(data.timestamp).getTime();
+          if (msgTime < cutoffTime) {
+            // Delete from Cloudinary
+            const uploadIndex = data.mediaUrl.indexOf('/upload/');
+            if (uploadIndex !== -1) {
+              const pathAfterUpload = data.mediaUrl.substring(uploadIndex + 8);
+              const pathWithoutVersion = pathAfterUpload.replace(/^v\d+\//, '');
+              const publicId = pathWithoutVersion.substring(0, pathWithoutVersion.lastIndexOf('.')) || pathWithoutVersion;
+              const resourceType = data.mediaUrl.includes('/video/') ? 'video' : 'image';
+              
+              try {
+                await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+                await doc.ref.update({ 
+                  mediaUrl: null, 
+                  mediaType: null,
+                  text: data.text ? data.text + '\n\n[Media auto-deleted after 30 days to save space]' : '[Media auto-deleted after 30 days to save space]'
+                });
+                deletedCount++;
+              } catch (e) {
+                console.error('Failed to cleanup old media for msg', doc.id, e);
+              }
+            }
+          }
+        }
+      }
+
+      res.json({ success: true, deletedCount });
+    } catch (err: any) {
+      console.error('Media cleanup error:', err);
+      res.status(500).json({ error: 'Failed to run media cleanup' });
+    }
+  });
 
 app.post('/api/user/username', authenticateToken, async (req: any, res: any) => {
   const { username } = req.body;
@@ -524,7 +612,7 @@ app.post('/api/user/onboarding', authenticateToken, async (req: any, res: any) =
     try {
       await sendEmailWithFallback({
         to: updatedUsers[0].email,
-        subject: 'Welcome to StudyOS! 🚀',
+        subject: 'Welcome to StudyOS! ðŸš€',
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
             <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -555,6 +643,7 @@ app.post('/api/user/onboarding', authenticateToken, async (req: any, res: any) =
 });
 
 app.get('/api/user/me', authenticateToken, async (req: any, res: any) => {
+
   try {
     const users = await sql`SELECT id, email, class_level, board, is_2fa_enabled, verified_auth_times FROM users WHERE id = ${req.user.userId}`;
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
@@ -584,6 +673,30 @@ app.get('/api/user/me', authenticateToken, async (req: any, res: any) => {
     res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
+
+app.put('/api/user/me', authenticateToken, async (req: any, res: any) => {
+  try {
+    const { class_level, board } = req.body;
+    
+    if (class_level === undefined) {
+      return res.status(400).json({ error: 'Missing class_level' });
+    }
+
+    await sql`
+      UPDATE users 
+      SET class_level = ${class_level}, 
+          board = ${board !== undefined ? board : sql`board`} 
+      WHERE id = ${req.user.userId}
+    `;
+    
+    const updatedUsers = await sql`SELECT id, email, class_level, board FROM users WHERE id = ${req.user.userId}`;
+    res.json({ user: updatedUsers[0] });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ error: 'Server error updating user' });
+  }
+});
+
 
 // --- 2FA Endpoints ---
 app.post('/api/2fa/generate', authenticateToken, authLimiter, async (req: any, res: any) => {
@@ -914,7 +1027,7 @@ app.get('/api/planner/merged', authenticateToken, async (req: any, res: any) => 
   }
 });
 
-// --- Sync Routine → Planner ---
+// --- Sync Routine â†’ Planner ---
 app.post('/api/routines/sync-planner', authenticateToken, async (req: any, res: any) => {
   try {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -1118,7 +1231,7 @@ app.get('/api/cron/routines', async (req: any, res: any) => {
                   let homeworkHtml = '';
                   if (pendingHomework.length > 0) {
                      homeworkHtml = `
-                       <h2 style="color: #4f46e5; margin-top: 24px; font-size: 18px;">📚 Pending Homework Reminder</h2>
+                       <h2 style="color: #4f46e5; margin-top: 24px; font-size: 18px;">ðŸ“š Pending Homework Reminder</h2>
                        <ul style="color: #374151; font-size: 16px; line-height: 1.5; padding-left: 20px;">
                          ${pendingHomework.map((h: any) => `<li style="margin-bottom: 8px;"><strong>${h.subject}:</strong> ${h.title} (Due: ${h.due_date})</li>`).join('')}
                        </ul>
@@ -1136,14 +1249,14 @@ app.get('/api/cron/routines', async (req: any, res: any) => {
 
                   await sendEmailWithFallback({
                     to: routine.email,
-                    subject: `☀️ Your StudyOS Agenda for Today`,
+                    subject: `â˜€ï¸ Your StudyOS Agenda for Today`,
                     html: `
                       <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; border-radius: 12px;">
                         <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                          <h1 style="color: #4f46e5; margin-top: 0;">Good Morning! ☀️</h1>
+                          <h1 style="color: #4f46e5; margin-top: 0;">Good Morning! â˜€ï¸</h1>
                           ${blockListHtml}
                           ${homeworkHtml}
-                          <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">Have a super productive day!<br>— The StudyOS Automation Team</p>
+                          <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">Have a super productive day!<br>â€” The StudyOS Automation Team</p>
                         </div>
                       </div>
                     `,
@@ -1274,7 +1387,7 @@ app.get('/api/cron/routines', async (req: any, res: any) => {
                           </div>
                           <p style="color: #6b7280; font-size: 14px; margin-top: 32px; text-align: center;">
                             Keep up the great work!<br>
-                            — The StudyOS Automation Team
+                            â€” The StudyOS Automation Team
                           </p>
                         </div>
                       </div>
@@ -1326,7 +1439,7 @@ app.get('/api/cron/routines', async (req: any, res: any) => {
                           </div>
                           <p style="color: #6b7280; font-size: 14px; margin-top: 32px; text-align: center;">
                             You got this!<br>
-                            — The StudyOS Automation Team
+                            â€” The StudyOS Automation Team
                           </p>
                         </div>
                    </div>
@@ -2104,7 +2217,7 @@ app.post('/api/ai/extract-routine', authenticateToken, aiLimiter, async (req: an
       return res.status(400).json({ error: 'No data provided to extract from.' });
     }
 
-    const systemPrompt = `You are a schedule extraction engine. The user will paste raw data in any format — it could be:
+    const systemPrompt = `You are a schedule extraction engine. The user will paste raw data in any format â€” it could be:
 - A JSON object or array (possibly from a database query)
 - A SQL query result or INSERT statements
 - A CSV or table
@@ -2260,5 +2373,55 @@ if (process.env.NODE_ENV !== 'production') {
   setInterval(() => {}, 1000 * 60 * 60);
 }
 
+// --- Last Minute Mode AI Chat ---
+app.post('/api/last-minute/chat', authenticateToken, aiLimiter, async (req: any, res: any) => {
+  try {
+    const { examName, examDate, board, classLevel, history } = req.body;
+    if (!history || !Array.isArray(history)) return res.status(400).json({ error: 'Missing chat history' });
+    const systemInstruction = 'You are a strict, efficient, and encouraging Emergency Last Minute Study Coach for a student taking the ' + examName + ' exam on ' + examDate + '. The student is in ' + classLevel + ' under the ' + board + ' board. Your goal is to help them cram effectively. 1. Generate a very concrete, hour-by-hour crash course study plan focusing on high-yield topics. 2. Be interactive, quiz them, explain concepts simply, keep them motivated. 3. Use markdown lists and bold for emphasis. Keep responses punchy and actionable.';
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+    const contents = history.map((msg: any) => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: contents, config: { systemInstruction, temperature: 0.7 } });
+    res.json({ reply: response.text || 'Thinking...' });
+  } catch (error: any) {
+    console.error('Last Minute Chat Error:', error);
+    res.status(500).json({ error: 'Failed to generate AI response' });
+  }
+});
+
 // Export the app for Vercel serverless function
+import { setupExamModeRoutes } from './examModeRoutes.js';
+setupExamModeRoutes(app, sql, authenticateToken, aiLimiter);
+
+// --- MongoDB Tutor History Routes ---
+app.get('/api/tutor/history', authenticateToken, async (req: any, res: any) => {
+  try {
+    const record = await TutorHistory.findOne({ userId: req.user.userId });
+    if (record && record.messages) {
+      res.json(record.messages);
+    } else {
+      res.json([]);
+    }
+  } catch (error) {
+    console.error('Fetch tutor history error:', error);
+    res.status(500).json({ error: 'Failed to fetch tutor history' });
+  }
+});
+
+app.post('/api/tutor/history', authenticateToken, express.json({ limit: '10mb' }), async (req: any, res: any) => {
+  try {
+    const { messages } = req.body;
+    await TutorHistory.findOneAndUpdate(
+      { userId: req.user.userId },
+      { messages, updatedAt: new Date() },
+      { upsert: true, new: true }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save tutor history error:', error);
+    res.status(500).json({ error: 'Failed to save tutor history' });
+  }
+});
+
+export { authenticateToken, aiLimiter };
 export default app;

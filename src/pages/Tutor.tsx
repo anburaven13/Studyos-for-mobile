@@ -16,23 +16,13 @@ type Message = {
 };
 
 export default function Tutor() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const userContext = user?.class_level && user?.board ? `${user.class_level} - ${user.board}` : undefined;
 
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem('tutor_messages');
-    if (saved) {
-      try { 
-        const parsed = JSON.parse(saved); 
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch (e) {}
-    }
-    return [
-      { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
-    ];
-  });
+  const [messages, setMessages] = useState<Message[]>([
+    { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
+  ]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -64,10 +54,37 @@ export default function Tutor() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Save messages to localStorage
+  // Load and save messages to MongoDB
   useEffect(() => {
-    localStorage.setItem('tutor_messages', JSON.stringify(messages));
-  }, [messages]);
+    fetch(`${import.meta.env.VITE_API_URL}/api/tutor/history`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(data => {
+      if (Array.isArray(data) && data.length > 1) {
+        setMessages(data);
+      } else {
+        // Seamless migration: Check if they have old chats in their browser
+        const oldLocalHistory = localStorage.getItem('tutor_messages');
+        if (oldLocalHistory) {
+          try {
+            const parsed = JSON.parse(oldLocalHistory);
+            if (Array.isArray(parsed) && parsed.length > 1) {
+              setMessages(parsed); // This will automatically trigger the save to MongoDB!
+            }
+          } catch(e) {}
+        }
+      }
+      setIsLoadingHistory(false);
+    }).catch(e => { console.error('Failed to load history', e); setIsLoadingHistory(false); });
+  }, [token]);
+
+  useEffect(() => {
+    if (isLoadingHistory) return;
+    fetch(`${import.meta.env.VITE_API_URL}/api/tutor/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ messages })
+    }).catch(e => console.error('Failed to save history', e));
+  }, [messages, isLoadingHistory, token]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

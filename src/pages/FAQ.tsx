@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-
+import Footer from '../components/layout/Footer';
 import { ChevronDown, Brain } from 'lucide-react';
 
 const faqs = [
@@ -55,6 +55,20 @@ export default function FAQ() {
       <Helmet>
         <title>FAQ | StudyOS</title>
         <meta name="description" content="Frequently Asked Questions about StudyOS." />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(f => ({
+              "@type": "Question",
+              "name": f.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": f.answer
+              }
+            }))
+          })}
+        </script>
       </Helmet>
       
       {/* Immersive Background Effects */}
@@ -140,7 +154,7 @@ export default function FAQ() {
         </main>
 
         <div className="border-t border-white/10 bg-black/50 backdrop-blur-md">
-          
+          <Footer />
         </div>
       </div>
     </div>

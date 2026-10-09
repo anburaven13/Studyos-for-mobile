@@ -36,3 +36,5 @@ opencode_skills/
 android/app/build/
 android/.gradle/
 *.apk
+
+api/service-account.json

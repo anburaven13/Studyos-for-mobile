@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Settings as SettingsIcon, User, Bell, Download, Globe, Puzzle, MonitorPlay, Loader2 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../components/ThemeProvider';
 
 export default function Settings() {
-  const { user, token, logout, syncUser } = useAuth();
+  const { user, token, logout, syncUser, updateUser } = useAuth();
+  const { theme, setTheme } = useTheme();
   
   const [show2FAModal, setShow2FAModal] = useState(false);
   const [qrCode, setQrCode] = useState('');
@@ -12,6 +14,33 @@ export default function Settings() {
   const [verifyCode, setVerifyCode] = useState('');
   const [loading2FA, setLoading2FA] = useState(false);
   const [error2FA, setError2FA] = useState('');
+  
+  const [isEditingClass, setIsEditingClass] = useState(false);
+  const [classLevel, setClassLevel] = useState(user?.class_level || 'General');
+  const [board, setBoard] = useState(user?.board || 'None');
+  const [isSavingClass, setIsSavingClass] = useState(false);
+
+  const handleUpdateClass = async () => {
+    setIsSavingClass(true);
+    try {
+      const res = await fetch('/api/user/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ class_level: classLevel, board: board })
+      });
+      if (!res.ok) throw new Error('Failed to update class');
+      
+      updateUser({ class_level: classLevel, board: board });
+      setIsEditingClass(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingClass(false);
+    }
+  };
 
   const handleSetup2FA = async () => {
     setLoading2FA(true);
@@ -89,9 +118,64 @@ export default function Settings() {
             <div className="text-lg font-medium">{user?.email || 'student@example.com'}</div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1 text-muted-foreground">Class Level</label>
-            <div className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium uppercase tracking-wider">
-              {user?.class_level || 'General'}
+            <label className="block text-sm font-medium mb-1 text-muted-foreground">Class & Board</label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {isEditingClass ? (
+                <>
+                  <select 
+                    value={classLevel}
+                    onChange={(e) => setClassLevel(e.target.value)}
+                    className="bg-muted border focus:border-primary rounded-lg px-3 py-1.5 outline-none text-sm font-medium"
+                  >
+                    {['General', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'College Freshman', 'College Sophomore', 'College Junior', 'College Senior', 'Graduate'].map(level => (
+                      <option key={level} value={level}>{level}</option>
+                    ))}
+                  </select>
+                  <select 
+                    value={board}
+                    onChange={(e) => setBoard(e.target.value)}
+                    className="bg-muted border focus:border-primary rounded-lg px-3 py-1.5 outline-none text-sm font-medium"
+                  >
+                    {['None', 'CBSE', 'ICSE', 'State Board', 'IB', 'IGCSE', 'University'].map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                  <button 
+                    onClick={handleUpdateClass}
+                    disabled={isSavingClass}
+                    className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isSavingClass ? 'Saving...' : 'Save'}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsEditingClass(false);
+                      setClassLevel(user?.class_level || 'General');
+                      setBoard(user?.board || 'None');
+                    }}
+                    className="text-xs bg-secondary text-secondary-foreground px-3 py-1.5 rounded-lg font-medium hover:opacity-90"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium uppercase tracking-wider">
+                    {user?.class_level || 'General'}
+                  </div>
+                  {(user?.board && user.board !== 'None') && (
+                    <div className="inline-block bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium uppercase tracking-wider">
+                      {user.board}
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => setIsEditingClass(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground underline decoration-dotted underline-offset-4"
+                  >
+                    Change
+                  </button>
+                </>
+              )}
             </div>
           </div>
           
@@ -159,7 +243,12 @@ export default function Settings() {
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={theme === 'dark'}
+                    onChange={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  />
                   <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>

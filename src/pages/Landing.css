@@ -576,8 +576,8 @@ h1 em {
 }
 
 @media (min-width: 901px) {
-  html, body { height: 100%; overflow: hidden; }
-  .page { height: 100vh; height: 100dvh; overflow: hidden; }
+  html, body { height: 100%; overflow-x: hidden; }
+  .page { min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
 }
 
 /* Mobile */

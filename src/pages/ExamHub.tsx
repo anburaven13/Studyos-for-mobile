@@ -252,6 +252,13 @@ export default function ExamHub() {
                     <div className={cn("px-3 py-1 rounded-md text-sm font-bold tabular-nums", getConfidenceColor(sub.confidence))}>
                       {sub.confidence}%
                     </div>
+                    <button 
+                      onClick={() => window.location.href = `/app/exams/${sub.id}/last-minute`}
+                      className="bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground px-3 py-1 rounded text-xs font-bold transition-colors flex items-center gap-1"
+                      title="Emergency Last Minute Study Plan"
+                    >
+                      <Sparkles className="w-3 h-3" /> Last Minute Mode
+                    </button>
                     <button onClick={() => deleteExam(sub.id)} className="text-muted-foreground hover:text-destructive transition-colors">
                       <Trash className="w-4 h-4" />
                     </button>

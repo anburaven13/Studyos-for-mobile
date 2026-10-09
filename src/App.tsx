@@ -1,10 +1,10 @@
-import React, { Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './lib/AuthContext';
+import { ThemeProvider } from './components/ThemeProvider';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
-import { requestNotificationPermissions } from './lib/notifications';
 
 // Code-splitting routes for better performance (LCP/Initial Load)
 const Login = React.lazy(() => import('./pages/Login'));
@@ -15,7 +15,9 @@ const Homework = React.lazy(() => import('./pages/Homework'));
 const Planner = React.lazy(() => import('./pages/Planner'));
 const Tutor = React.lazy(() => import('./pages/Tutor'));
 const ExamHub = React.lazy(() => import('./pages/ExamHub'));
+const LastMinuteMode = React.lazy(() => import('./pages/LastMinuteMode'));
 const Workspace = React.lazy(() => import('./pages/Workspace'));
+const Landing = React.lazy(() => import('./pages/Landing'));
 const FAQ = React.lazy(() => import('./pages/FAQ'));
 const Support = React.lazy(() => import('./pages/Support'));
 const Routines = React.lazy(() => import('./pages/Routines'));
@@ -31,43 +33,40 @@ const PageLoader = () => (
 );
 
 function App() {
-  // Request notification permissions on app startup (Android)
-  useEffect(() => {
-    requestNotificationPermissions();
-  }, []);
-
   return (
     <HelmetProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              
-              <Route path="/" element={<Navigate to="/app" replace />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="/support" element={<Support />} />
-              
-              <Route element={<ProtectedRoute />}>
-                <Route path="/app" element={<AppLayout />}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="notes" element={<Notes />} />
-                  <Route path="homework" element={<Homework />} />
-                  <Route path="planner" element={<Planner />} />
-                  <Route path="tutor" element={<Tutor />} />
-                  <Route path="exams" element={<ExamHub />} />
-                  <Route path="routines" element={<Routines />} />
-                  <Route path="workspace" element={<Workspace />} />
-                  <Route path="messages" element={<Messages />} />
-                  <Route path="genome" element={<Genome />} />
-                  <Route path="settings" element={<Settings />} />
+      <ThemeProvider defaultTheme="system" storageKey="studyos-theme">
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                
+                <Route path="/" element={<Landing />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/support" element={<Support />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/app" element={<AppLayout />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="notes" element={<Notes />} />
+                    <Route path="homework" element={<Homework />} />
+                    <Route path="planner" element={<Planner />} />
+                    <Route path="tutor" element={<Tutor />} />
+                    <Route path="exams" element={<ExamHub />} />
+                    <Route path="exams/:examId/last-minute" element={<LastMinuteMode />} />
+                    <Route path="routines" element={<Routines />} />
+                    <Route path="workspace" element={<Workspace />} />
+                    <Route path="messages" element={<Messages />} />
+                    <Route path="genome" element={<Genome />} />
+                    <Route path="settings" element={<Settings />} />
+                  </Route>
                 </Route>
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </AuthProvider>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 }
