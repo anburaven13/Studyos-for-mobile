@@ -4,6 +4,8 @@ import { useAuth } from '../lib/AuthContext';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import liquidGL from 'liquid-gl';
+import { useEffect } from 'react';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,6 +22,28 @@ export default function Login() {
   
   const { syncUser } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const glass = liquidGL({
+      target: '.login-glass',
+      engine: 'auto',
+      snapshot: 'body',
+      refraction: 0.12,
+      aberration: 0.3,
+      bevelDepth: 0.05,
+      bevelWidth: 0.08,
+      frost: 3,
+      shadow: true,
+      specular: true,
+      tint: 'rgba(20, 20, 25, 0.5)',
+      interaction: 'fluid',
+      interactionStrength: 2.0,
+      reveal: 'fade'
+    });
+    return () => {
+      if (glass && typeof glass.destroy === 'function') glass.destroy();
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,10 +163,20 @@ export default function Login() {
 
   if (show2FA) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md border rounded-2xl bg-card shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-2">Two-Factor Authentication</h1>
-          <p className="text-muted-foreground text-center mb-8 text-sm">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+        >
+          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+        </video>
+        <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+          <div className="content relative z-20">
+            <h1 className="text-2xl font-bold text-center mb-2 text-white">Two-Factor Authentication</h1>
+            <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
             Enter the 6-digit code from your authenticator app
           </p>
           
@@ -154,14 +188,14 @@ export default function Login() {
 
           <form onSubmit={handleVerify2FA} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">6-Digit Code</label>
+              <label className="block text-sm font-medium mb-1 text-gray-200">6-Digit Code</label>
               <input 
                 type="text" 
                 required
                 maxLength={6}
                 value={twoFACode}
                 onChange={(e) => setTwoFACode(e.target.value)}
-                className="w-full bg-muted/50 border focus:border-primary rounded-lg px-4 py-2.5 outline-none transition-colors tracking-widest text-center text-lg"
+                className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg px-4 py-2.5 outline-none transition-colors tracking-widest text-center text-lg"
                 placeholder="000000"
               />
             </div>
@@ -169,7 +203,7 @@ export default function Login() {
             <button 
               type="submit" 
               disabled={loading || twoFACode.length < 6}
-              className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full bg-white text-black hover:bg-gray-200 py-2.5 rounded-lg font-medium flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Verify</span>}
             </button>
@@ -186,15 +220,26 @@ export default function Login() {
           </form>
         </div>
       </div>
+    </div>
     );
   }
 
   if (showForgot) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md border rounded-2xl bg-card shadow-lg p-8">
-          <h1 className="text-2xl font-bold text-center mb-2">Reset Password</h1>
-          <p className="text-muted-foreground text-center mb-8 text-sm">
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+        >
+          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+        </video>
+        <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+          <div className="content relative z-20">
+            <h1 className="text-2xl font-bold text-center mb-2 text-white">Reset Password</h1>
+            <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
             Enter your email to receive a password reset link
           </p>
           
@@ -214,7 +259,7 @@ export default function Login() {
                   setShowForgot(false);
                   setResetSent(false);
                 }}
-                className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity"
+                className="w-full bg-white text-black hover:bg-gray-200 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity"
               >
                 Back to Login
               </button>
@@ -222,13 +267,13 @@ export default function Login() {
           ) : (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <label className="block text-sm font-medium mb-1 text-gray-200">Email</label>
                 <input 
                   type="email" 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-muted/50 border focus:border-primary rounded-lg px-4 py-2.5 outline-none transition-colors"
+                  className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg px-4 py-2.5 outline-none transition-colors"
                   placeholder="you@example.com"
                 />
               </div>
@@ -236,7 +281,7 @@ export default function Login() {
               <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full bg-white text-black hover:bg-gray-200 py-2.5 rounded-lg font-medium flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>Send Reset Link</span>}
               </button>
@@ -251,21 +296,32 @@ export default function Login() {
           )}
         </div>
       </div>
+    </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md border rounded-2xl bg-card shadow-lg p-8">
-        <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+      >
+        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+      </video>
+      <div className="login-glass w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
+        <div className="content relative z-20">
+          <div className="flex justify-center mb-6">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
         </div>
-        <h1 className="text-2xl font-bold text-center mb-2">
+        <h1 className="text-2xl font-bold text-center mb-2 text-white">
           {isLogin ? 'Welcome back' : 'Create an account'}
         </h1>
-        <p className="text-muted-foreground text-center mb-8 text-sm">
+        <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
           {isLogin ? 'Enter your details to access your workspace' : 'Sign up to start organizing your studies'}
         </p>
 
@@ -277,24 +333,24 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1 text-gray-200">Email</label>
             <input 
               type="email" 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-muted/50 border focus:border-primary rounded-lg px-4 py-2.5 outline-none transition-colors"
+              className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg px-4 py-2.5 outline-none transition-colors"
               placeholder="you@example.com"
             />
           </div>
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="block text-sm font-medium">Password</label>
+              <label className="block text-sm font-medium text-gray-200">Password</label>
               {isLogin && (
                 <button 
                   type="button"
                   onClick={() => setShowForgot(true)}
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-white hover:underline"
                 >
                   Forgot password?
                 </button>
@@ -305,7 +361,7 @@ export default function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-muted/50 border focus:border-primary rounded-lg px-4 py-2.5 outline-none transition-colors"
+              className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg px-4 py-2.5 outline-none transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -313,20 +369,21 @@ export default function Login() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full bg-white text-black hover:bg-gray-200 py-2.5 rounded-lg font-medium flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>{isLogin ? 'Sign In' : 'Sign Up'}</span>}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-6 text-center text-sm text-gray-300 drop-shadow-md">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 
             onClick={() => setIsLogin(!isLogin)} 
-            className="text-primary font-medium hover:underline"
+            className="text-white font-medium hover:underline"
           >
             {isLogin ? 'Sign up' : 'Sign in'}
           </button>
+        </div>
         </div>
       </div>
     </div>
