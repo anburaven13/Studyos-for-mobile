@@ -172,7 +172,7 @@ const Hero = () => {
 
   return (
     <section id="about" className="min-h-screen flex flex-col items-center justify-center pt-32 pb-20 relative z-0">
-      <video crossOrigin="anonymous" autoPlay
+      <video autoPlay
         loop
         muted
         playsInline
@@ -338,7 +338,7 @@ const Feature1 = () => {
 
         <FadeInUp delay={200}>
           <div className="rounded-3xl overflow-hidden p-8 border border-white/10 relative h-[500px] flex items-end">
-            <video crossOrigin="anonymous" autoPlay
+            <video autoPlay
               loop
               muted
               playsInline
@@ -383,7 +383,7 @@ const Feature2 = () => {
       <div className="grid lg:grid-cols-2 gap-16 items-center">
         <FadeInUp delay={200}>
           <div className="rounded-3xl overflow-hidden p-8 border border-white/10 relative h-[500px] flex items-center justify-center order-2 lg:order-1">
-            <video crossOrigin="anonymous" autoPlay
+            <video autoPlay
               loop
               muted
               playsInline
@@ -483,7 +483,7 @@ const FAQ = () => {
 const Footer = () => {
   return (
     <footer id="contact" className="relative z-0 pt-32 pb-10 px-6 border-t border-white/5 w-full">
-      <video crossOrigin="anonymous" autoPlay
+      <video autoPlay
         loop
         muted
         playsInline

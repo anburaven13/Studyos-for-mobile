@@ -142,7 +142,7 @@ export default function Login() {
   if (show2FA) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video crossOrigin="anonymous" autoPlay
+        <video autoPlay
           loop
           muted
           playsInline
@@ -204,7 +204,7 @@ export default function Login() {
   if (showForgot) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video crossOrigin="anonymous" autoPlay
+        <video autoPlay
           loop
           muted
           playsInline
@@ -278,7 +278,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-      <video crossOrigin="anonymous" autoPlay
+      <video autoPlay
         loop
         muted
         playsInline
