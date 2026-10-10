@@ -114,6 +114,10 @@ export default function Settings() {
         
         <div className="md:col-span-2 bg-card border rounded-2xl p-6 shadow-sm space-y-6">
           <div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-muted-foreground">Username</label>
+              <div className="text-lg font-medium">@{user?.username || 'unclaimed'}</div>
+            </div>
             <label className="block text-sm font-medium mb-1 text-muted-foreground">Email</label>
             <div className="text-lg font-medium">{user?.email || 'student@example.com'}</div>
           </div>
