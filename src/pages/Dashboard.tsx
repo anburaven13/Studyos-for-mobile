@@ -65,8 +65,11 @@ export default function Dashboard() {
       d.setDate(d.getDate() - i);
       
       const session = studySessions.find(s => {
-        // Timezone-safe comparison: match local day strictly against DB calendar day
-        const sDateString = s.date.split('T')[0];
+        const sDate = new Date(s.date);
+        const sYear = sDate.getFullYear();
+        const sMonth = String(sDate.getMonth() + 1).padStart(2, '0');
+        const sDay = String(sDate.getDate()).padStart(2, '0');
+        const sDateString = `${sYear}-${sMonth}-${sDay}`;
         
         const dYear = d.getFullYear();
         const dMonth = String(d.getMonth() + 1).padStart(2, '0');
