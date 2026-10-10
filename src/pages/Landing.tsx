@@ -178,7 +178,7 @@ const Hero = () => {
         playsInline
         className="absolute inset-0 -z-10 object-cover min-w-full min-h-full opacity-90"
       >
-        <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
+        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black -z-10" />
 
@@ -344,7 +344,7 @@ const Feature1 = () => {
               playsInline
               className="absolute inset-0 object-cover w-full h-full -z-10"
             >
-              <source src="https://files.catbox.moe/eunmf3.mp4" type="video/mp4" />
+              <source src="https://cdn.sceneai.art/Hero%20Section%20Video/1bcc8fa3-37f6-4c53-8591-0347e4c7f8ac.mp4" type="video/mp4" />
             </video>
             <div className="absolute inset-0 bg-black/20 -z-10" />
 
@@ -389,7 +389,7 @@ const Feature2 = () => {
               playsInline
               className="absolute inset-0 object-cover w-full h-full -z-10"
             >
-              <source src="https://files.catbox.moe/h88q8s.mp4" type="video/mp4" />
+              <source src="https://cdn.sceneai.art/Hero%20Section%20Video/736fd4a0-70ac-4f44-9633-55769ead6aca.mp4" type="video/mp4" />
             </video>
             <div className="absolute inset-0 bg-black/20 -z-10" />
 
@@ -489,7 +489,7 @@ const Footer = () => {
         playsInline
         className="absolute inset-0 object-cover w-full h-full opacity-40 -z-10"
       >
-        <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
+        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-gradient-to-b from-black via-black/60 to-black -z-10" />
 

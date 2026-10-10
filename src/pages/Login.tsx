@@ -148,7 +148,7 @@ export default function Login() {
           playsInline
           className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
         >
-          <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
+          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
         </video>
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
@@ -210,7 +210,7 @@ export default function Login() {
           playsInline
           className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
         >
-          <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
+          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
         </video>
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
@@ -284,7 +284,7 @@ export default function Login() {
         playsInline
         className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
       >
-        <source src="https://files.catbox.moe/yb3y7v.mp4" type="video/mp4" />
+        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
       </video>
       <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
         <div className="content relative z-20">
