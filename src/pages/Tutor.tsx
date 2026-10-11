@@ -19,10 +19,33 @@ export default function Tutor() {
   const { user, token } = useAuth();
   const userContext = user?.class_level && user?.board ? `${user.class_level} - ${user.board}` : undefined;
 
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }
-  ]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const DEFAULT_GREETING: Message = {
+    id: '1',
+    role: 'ai',
+    content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?"
+  };
+
+  const getStorageKey = () => (user?.id ? `tutor_messages_${user.id}` : 'tutor_messages');
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const userKey = user?.id ? `tutor_messages_${user.id}` : 'tutor_messages';
+      const saved = localStorage.getItem(userKey) || localStorage.getItem('tutor_messages');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return [{
+      id: '1',
+      role: 'ai',
+      content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?"
+    }];
+  });
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const isInitialSyncDone = useRef(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
@@ -54,37 +77,80 @@ export default function Tutor() {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Load and save messages to MongoDB
+  // Always save to localStorage immediately on every change so messages NEVER disappear
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/tutor/history`, {
+    const key = getStorageKey();
+    try {
+      localStorage.setItem(key, JSON.stringify(messages));
+      localStorage.setItem('tutor_messages', JSON.stringify(messages));
+    } catch (e) {
+      console.error('Failed to save to localStorage', e);
+    }
+  }, [messages, user?.id]);
+
+  // Two-way smart cloud sync with MongoDB
+  useEffect(() => {
+    if (!token) return;
+
+    fetch(`/api/tutor/history`, {
       headers: { Authorization: `Bearer ${token}` }
-    }).then(r => r.json()).then(data => {
-      if (Array.isArray(data) && data.length > 1) {
-        setMessages(data);
-      } else {
-        // Seamless migration: Check if they have old chats in their browser
-        const oldLocalHistory = localStorage.getItem('tutor_messages');
-        if (oldLocalHistory) {
-          try {
-            const parsed = JSON.parse(oldLocalHistory);
-            if (Array.isArray(parsed) && parsed.length > 1) {
-              setMessages(parsed); // This will automatically trigger the save to MongoDB!
-            }
-          } catch(e) {}
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          if (data.length > 1) {
+            setMessages(prev => {
+              // If local has more messages than cloud (e.g. typed offline), push local to cloud
+              if (prev.length > data.length) {
+                fetch(`/api/tutor/history`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ messages: prev })
+                }).catch(err => console.error('Cloud push error', err));
+                return prev;
+              }
+              // Cloud has more/equal messages: update local
+              return data;
+            });
+          } else if (data.length <= 1) {
+            // Cloud has no chat yet, but user has existing local chat! Push local to cloud
+            setMessages(prev => {
+              if (prev.length > 1) {
+                fetch(`/api/tutor/history`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ messages: prev })
+                }).catch(err => console.error('Cloud upload error', err));
+              }
+              return prev;
+            });
+          }
         }
-      }
-      setIsLoadingHistory(false);
-    }).catch(e => { console.error('Failed to load history', e); setIsLoadingHistory(false); });
+        setIsLoadingHistory(false);
+        isInitialSyncDone.current = true;
+      })
+      .catch(e => {
+        console.error('Failed to load history from cloud', e);
+        setIsLoadingHistory(false);
+        isInitialSyncDone.current = true;
+      });
   }, [token]);
 
+  // Auto-save changes to cloud after initial sync is established
   useEffect(() => {
-    if (isLoadingHistory) return;
-    fetch(`${import.meta.env.VITE_API_URL}/api/tutor/history`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ messages })
-    }).catch(e => console.error('Failed to save history', e));
-  }, [messages, isLoadingHistory, token]);
+    if (!token || !isInitialSyncDone.current) return;
+    if (messages.length <= 1) return;
+
+    const timer = setTimeout(() => {
+      fetch(`/api/tutor/history`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ messages })
+      }).catch(e => console.error('Failed to save history to cloud', e));
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [messages, token]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -147,6 +213,30 @@ export default function Tutor() {
     setIsTyping(false);
   };
 
+  const handleClearChat = async () => {
+    if (confirm('Are you sure you want to clear this conversation?')) {
+      const reset = [DEFAULT_GREETING];
+      setMessages(reset);
+      const key = getStorageKey();
+      try {
+        localStorage.setItem(key, JSON.stringify(reset));
+        localStorage.setItem('tutor_messages', JSON.stringify(reset));
+      } catch (e) {}
+
+      if (token) {
+        try {
+          await fetch(`/api/tutor/history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ messages: reset, clear: true })
+          });
+        } catch (e) {
+          console.error('Failed to clear cloud history', e);
+        }
+      }
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col">
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -159,11 +249,7 @@ export default function Tutor() {
         </div>
         <div className="flex-1" />
         <button 
-          onClick={() => {
-            if (confirm('Are you sure you want to clear this conversation?')) {
-              setMessages([{ id: '1', role: 'ai', content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?" }]);
-            }
-          }}
+          onClick={handleClearChat}
           className="p-2 border rounded-md hover:bg-muted text-muted-foreground transition-colors"
           title="Clear Chat"
         >

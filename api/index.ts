@@ -2396,8 +2396,9 @@ setupExamModeRoutes(app, sql, authenticateToken, aiLimiter);
 // --- MongoDB Tutor History Routes ---
 app.get('/api/tutor/history', authenticateToken, async (req: any, res: any) => {
   try {
+    await connectMongo();
     const record = await TutorHistory.findOne({ userId: req.user.userId });
-    if (record && record.messages) {
+    if (record && Array.isArray(record.messages)) {
       res.json(record.messages);
     } else {
       res.json([]);
@@ -2410,11 +2411,27 @@ app.get('/api/tutor/history', authenticateToken, async (req: any, res: any) => {
 
 app.post('/api/tutor/history', authenticateToken, express.json({ limit: '10mb' }), async (req: any, res: any) => {
   try {
-    const { messages } = req.body;
+    await connectMongo();
+    const { messages, clear } = req.body;
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    // Safety guard against accidental wiping:
+    // If incoming payload has 1 or fewer messages and was NOT explicitly triggered by a clear action,
+    // verify if user has existing multi-message history and prevent wiping.
+    if (messages.length <= 1 && !clear) {
+      const existing = await TutorHistory.findOne({ userId: req.user.userId });
+      if (existing && Array.isArray(existing.messages) && existing.messages.length > 1) {
+        console.log(`Protected history for user ${req.user.userId} against accidental overwrite (${existing.messages.length} existing messages).`);
+        return res.json({ success: true, protected: true, messages: existing.messages });
+      }
+    }
+
     await TutorHistory.findOneAndUpdate(
       { userId: req.user.userId },
       { messages, updatedAt: new Date() },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
     res.json({ success: true });
   } catch (error) {
