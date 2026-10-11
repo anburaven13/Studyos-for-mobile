@@ -3,7 +3,7 @@ import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
-import { Sparkles, Loader2, Check, Trash } from 'lucide-react';
+import { Sparkles, Loader2, Check, Trash, Folder, FileText } from 'lucide-react';
 import { simulateAiResponse, generateFlashcards, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
@@ -13,6 +13,7 @@ type Note = { id: string; title: string; content: string; folder?: string; tags?
 export default function Notes() {
   const [notesList, setNotesList] = useState<Note[]>([{ id: 'new', title: '', content: '' }]);
   const [activeNoteId, setActiveNoteId] = useState<string>('new');
+  const [mobileTab, setMobileTab] = useState<'notes' | 'content' | 'ai'>('content');
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [summary, setSummary] = useState('');
@@ -141,6 +142,7 @@ export default function Notes() {
         });
         setActiveNoteId(newNote.id.toString());
         setIsEditing(true);
+        setMobileTab('content');
         setSummary('');
         setFlashcards([]);
         setQuizActive(false);
@@ -343,9 +345,46 @@ export default function Notes() {
         </div>
       </div>
 
-      <div className="border rounded-2xl shadow-sm flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden bg-card">
+      {/* Mobile / Split-screen Navigation Tabs */}
+      <div className="flex lg:hidden items-center p-1 bg-muted/60 rounded-xl mb-3 border border-border/50 flex-shrink-0">
+        <button
+          onClick={() => setMobileTab('notes')}
+          className={cn(
+            "flex-1 py-1.5 px-3 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5",
+            mobileTab === 'notes' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Folder className="w-3.5 h-3.5" />
+          <span>Notes ({notesList.length})</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('content')}
+          className={cn(
+            "flex-1 py-1.5 px-3 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5",
+            mobileTab === 'content' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span className="truncate max-w-[130px]">{activeNote?.title || 'Note'}</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('ai')}
+          className={cn(
+            "flex-1 py-1.5 px-3 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5",
+            mobileTab === 'ai' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span>AI Tools</span>
+        </button>
+      </div>
+
+      <div className="border rounded-2xl shadow-sm flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden bg-card">
         {/* Sidebar */}
-        <div className="w-full md:w-64 h-[20vh] md:h-auto border-b md:border-b-0 md:border-r bg-muted/20 flex-shrink-0 overflow-y-auto">
+        <div className={cn(
+          "w-full lg:w-64 border-b lg:border-b-0 lg:border-r bg-muted/20 flex-shrink-0 overflow-y-auto",
+          mobileTab === 'notes' ? "flex-1 min-h-0 block" : "hidden lg:block lg:h-auto"
+        )}>
           {Object.keys(groupedNotes).map(folder => (
             <div key={folder} className="mb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-6 mt-4">{folder}</p>
@@ -358,6 +397,7 @@ export default function Notes() {
                       setSummary('');
                       setFlashcards([]);
                       setQuizActive(false);
+                      setMobileTab('content');
                     }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
@@ -380,8 +420,14 @@ export default function Notes() {
         </div>
 
         {/* Editor / Preview */}
-        <div className="flex-1 flex flex-col lg:flex-row relative min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x">
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className={cn(
+          "flex-1 flex flex-col lg:flex-row relative min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x",
+          mobileTab === 'notes' ? "hidden lg:flex" : "flex"
+        )}>
+          <div className={cn(
+            "flex-1 flex flex-col min-h-0 overflow-hidden",
+            mobileTab === 'ai' ? "hidden lg:flex" : "flex"
+          )}>
             {quizActive ? (
               <div className="w-full h-full p-8 overflow-y-auto flex flex-col items-center justify-center">
                 <div className="max-w-2xl w-full bg-card border rounded-2xl shadow-sm p-8">
@@ -500,7 +546,10 @@ export default function Notes() {
           </div>
           
           {/* AI Sidebar */}
-          <div className="w-full lg:w-80 h-[35vh] lg:h-auto bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto">
+          <div className={cn(
+            "w-full lg:w-80 bg-muted/10 p-4 md:p-6 flex flex-col flex-shrink-0 overflow-y-auto",
+            mobileTab === 'ai' ? "flex flex-1 min-h-0 h-full" : "hidden lg:flex lg:h-auto"
+          )}>
             <h3 className="font-semibold mb-6 flex items-center space-x-2">
               <Sparkles className="w-4 h-4 text-primary" />
               <span>AI Tools</span>
