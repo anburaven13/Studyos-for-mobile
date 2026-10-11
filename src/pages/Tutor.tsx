@@ -95,7 +95,14 @@ export default function Tutor() {
     fetch(`/api/tutor/history`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(r => r.json())
+      .then(async r => {
+        if (!r.ok) return [];
+        try {
+          return await r.json();
+        } catch {
+          return [];
+        }
+      })
       .then(data => {
         if (Array.isArray(data)) {
           if (data.length > 1) {
