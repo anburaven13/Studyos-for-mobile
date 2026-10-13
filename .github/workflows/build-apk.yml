@@ -39,7 +39,7 @@ jobs:
 
       - name: Build Web Assets
         env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'AIzaSyCuurKtdQSv0XhIc2jn-RE5VJCrJf-JCp4' }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_API_BASE_URL: https://studyos-snowy.vercel.app
         run: npm run build
 

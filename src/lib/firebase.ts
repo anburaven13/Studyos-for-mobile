@@ -3,12 +3,8 @@ import { getAuth, setPersistence, browserLocalPersistence, indexedDBLocalPersist
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-const FIREBASE_API_KEY =
-  import.meta.env.VITE_FIREBASE_API_KEY ||
-  "AIzaSyCuurKtdQSv0XhIc2jn-RE5VJCrJf-JCp4";
-
 const firebaseConfig = {
-  apiKey: FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "studyos-snowy.firebaseapp.com",
   projectId: "studyos-snowy",
   storageBucket: "studyos-snowy.firebasestorage.app",
