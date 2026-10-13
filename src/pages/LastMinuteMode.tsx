@@ -7,6 +7,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
 
 export default function LastMinuteMode() {
   const { examId } = useParams();
@@ -164,7 +165,7 @@ export default function LastMinuteMode() {
                    {msg.role === 'user' ? (
                      <span className="whitespace-pre-wrap">{msg.text}</span>
                    ) : (
-                     <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+                     <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex]}>
                        {msg.text}
                      </Markdown>
                    )}
