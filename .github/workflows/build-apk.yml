@@ -38,6 +38,9 @@ jobs:
           sed -i "s/versionName .*/versionName \"1.0.${{ github.run_number }}\"/g" android/app/build.gradle
 
       - name: Build Web Assets
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY || 'AIzaSyCuurKtdQSv0XhIc2jn-RE5VJCrJf-JCp4' }}
+          VITE_API_BASE_URL: https://studyos-snowy.vercel.app
         run: npm run build
 
       - name: Sync Capacitor Android

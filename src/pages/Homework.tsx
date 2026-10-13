@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Check, Circle, Sparkles, Loader2, X, Trash } from 'lucide-react';
 import { simulateAiResponse } from '../lib/aiService';
 import { Helmet } from 'react-helmet-async';
+import { apiUrl } from '../lib/api';
 
 type Task = {
   id: string;
@@ -24,7 +25,7 @@ export default function Homework() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/homework', {
+      const res = await fetch(apiUrl('/api/homework'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -49,7 +50,7 @@ export default function Homework() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(`/api/homework/${id}/toggle`, {
+      await fetch(apiUrl(`/api/homework/${id}/toggle`), {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -66,7 +67,7 @@ export default function Homework() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(`/api/homework/${id}`, {
+      await fetch(apiUrl(`/api/homework/${id}`), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -82,7 +83,7 @@ export default function Homework() {
     if (!token) return;
 
     try {
-      const res = await fetch('/api/homework', {
+      const res = await fetch(apiUrl('/api/homework'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

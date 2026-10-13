@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Settings as SettingsIcon, User, Bell, Download, Globe, Puzzle, MonitorPlay, Loader2 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useTheme } from '../components/ThemeProvider';
+import { apiUrl } from '../lib/api';
 
 export default function Settings() {
   const { user, token, logout, syncUser, updateUser } = useAuth();
@@ -23,7 +24,7 @@ export default function Settings() {
   const handleUpdateClass = async () => {
     setIsSavingClass(true);
     try {
-      const res = await fetch('/api/user/me', {
+      const res = await fetch(apiUrl('/api/user/me'), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +49,7 @@ export default function Settings() {
     setShow2FAModal(true);
     
     try {
-      const res = await fetch('/api/2fa/generate', {
+      const res = await fetch(apiUrl('/api/2fa/generate'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -68,7 +69,7 @@ export default function Settings() {
     setLoading2FA(true);
     setError2FA('');
     try {
-      const res = await fetch('/api/2fa/enable', {
+      const res = await fetch(apiUrl('/api/2fa/enable'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,8 +19,14 @@ export default function Login() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   
-  const { syncUser } = useAuth();
+  const { token, syncUser } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token) {
+      navigate('/app', { replace: true });
+    }
+  }, [token, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +88,7 @@ export default function Login() {
     setError('');
     
     try {
-      const res = await fetch('/api/2fa/verify', {
+      const res = await fetch(apiUrl('/api/2fa/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +126,7 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetch(apiUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })

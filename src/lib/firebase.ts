@@ -1,10 +1,14 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth, setPersistence, browserLocalPersistence, indexedDBLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+const FIREBASE_API_KEY =
+  import.meta.env.VITE_FIREBASE_API_KEY ||
+  "AIzaSyCuurKtdQSv0XhIc2jn-RE5VJCrJf-JCp4";
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: FIREBASE_API_KEY,
   authDomain: "studyos-snowy.firebaseapp.com",
   projectId: "studyos-snowy",
   storageBucket: "studyos-snowy.firebasestorage.app",
@@ -13,7 +17,14 @@ const firebaseConfig = {
   measurementId: "G-BSCT616G4K"
 };
 
-export const app = initializeApp(firebaseConfig);
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+
+// Explicitly persist authentication session in localStorage (browserLocalPersistence) for Capacitor mobile webview
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('[Firebase] browserLocalPersistence failed, attempting indexedDBLocalPersistence:', err);
+  setPersistence(auth, indexedDBLocalPersistence).catch(console.error);
+});
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);

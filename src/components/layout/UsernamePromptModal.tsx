@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../lib/AuthContext';
 import { motion } from 'motion/react';
 import { AtSign, Loader2, ArrowRight, User } from 'lucide-react';
+import { apiUrl } from '../../lib/api';
 
 export default function UsernamePromptModal() {
   const { user, token, updateUser } = useAuth();
@@ -29,7 +30,7 @@ export default function UsernamePromptModal() {
     setError('');
 
     try {
-      const res = await fetch('/api/user/username', {
+      const res = await fetch(apiUrl('/api/user/username'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

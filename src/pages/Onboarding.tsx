@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { apiUrl } from '../lib/api';
 
 const classes = ['Class 10', 'Class 11', 'Class 12'];
 const boards = ['CBSE', 'ICSE', 'State Board'];
@@ -20,7 +21,7 @@ export default function Onboarding() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/user/onboarding', {
+      const res = await fetch(apiUrl('/api/user/onboarding'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

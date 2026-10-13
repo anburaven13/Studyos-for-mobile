@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Sparkles, AlertTriangle, Clock } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { cn } from '../lib/utils';
+import { apiUrl } from '../lib/api';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -29,7 +30,7 @@ export default function LastMinuteMode() {
     const fetchExam = async () => {
       if (!token) return;
       try {
-        const res = await fetch('/api/exams', {
+        const res = await fetch(apiUrl('/api/exams'), {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -70,7 +71,7 @@ export default function LastMinuteMode() {
     setIsLoading(true);
     
     try {
-      const res = await fetch('/api/last-minute/chat', {
+      const res = await fetch(apiUrl('/api/last-minute/chat'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

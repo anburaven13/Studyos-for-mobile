@@ -8,6 +8,7 @@ import { Sparkles, Loader2, Check, Trash } from 'lucide-react';
 import { simulateAiResponse, generateFlashcards, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
+import { apiUrl } from '../lib/api';
 
 type Note = { id: string; title: string; content: string; folder?: string; tags?: any; };
 
@@ -40,7 +41,7 @@ export default function Notes() {
       const token = localStorage.getItem('token');
       if (!token) return;
       try {
-        const res = await fetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(apiUrl('/api/notes'), { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           if (data.length > 0) {
@@ -69,7 +70,7 @@ export default function Notes() {
       const note = latestNoteRef.current;
       const token = localStorage.getItem('token');
       if (note && note.id && note.id.toString() !== 'new' && note.id.toString() !== 'temp' && token) {
-        fetch(`/api/notes/${note.id}`, {
+        fetch(apiUrl(`/api/notes/${note.id}`), {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ export default function Notes() {
     setSaveStatus('Saving...');
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/notes/${activeNote.id}`, {
+        const res = await fetch(apiUrl(`/api/notes/${activeNote.id}`), {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
@@ -124,7 +125,7 @@ export default function Notes() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch('/api/notes', {
+      const res = await fetch(apiUrl('/api/notes'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -156,7 +157,7 @@ export default function Notes() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(`/api/notes/${id}`, {
+      await fetch(apiUrl(`/api/notes/${id}`), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -204,7 +205,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await fetch('/api/ai/quiz', {
+      const res = await fetch(apiUrl('/api/ai/quiz'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, userContext })
@@ -235,7 +236,7 @@ export default function Notes() {
     if (!token) return;
     
     try {
-      const res = await fetch('/api/dna/compile', {
+      const res = await fetch(apiUrl('/api/dna/compile'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ content: activeNote.content, source_id: activeNote.id })

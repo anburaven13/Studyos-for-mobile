@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Book, CheckCircle, Clock, LayoutList, PenTool, MessageSquare, Send, Sparkles } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { cn } from '../lib/utils';
+import { apiUrl } from '../lib/api';
 
 export default function ExamWorkspace() {
   const { examId } = useParams();
@@ -21,7 +22,7 @@ export default function ExamWorkspace() {
 
   const fetchSyllabus = async (subject: string) => {
     try {
-      const res = await fetch(`/api/exam-mode/syllabi?board=${user?.board || 'CBSE'}&class_level=${user?.class_level || 'Class 10'}&academic_year=2026-2027&subject=${subject}`, {
+      const res = await fetch(apiUrl(`/api/exam-mode/syllabi?board=${user?.board || 'CBSE'}&class_level=${user?.class_level || 'Class 10'}&academic_year=2026-2027&subject=${subject}`), {
         headers: { 'Authorization': `Bearer ${token || ''}` }
       });
       if (res.ok) {
@@ -39,7 +40,7 @@ export default function ExamWorkspace() {
     if (!syllabusText.trim()) return;
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/exam-mode/syllabi/sync', {
+      const res = await fetch(apiUrl('/api/exam-mode/syllabi/sync'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

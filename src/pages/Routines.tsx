@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, Circle, Edit, Loader2, Sparkles, X, Wand2, FileJson, Brain, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractRoutineFromData } from '../lib/aiService';
+import { apiUrl } from '../lib/api';
 
 type Block = {
   id: string;
@@ -44,8 +45,8 @@ export default function Routines() {
       if (!token) return;
       try {
         const [schRes, progRes] = await Promise.all([
-          fetch('/api/routines', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`/api/routines/progress?date=${todayStr}`, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(apiUrl('/api/routines'), { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(apiUrl(`/api/routines/progress?date=${todayStr}`), { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         if (schRes.ok) setSchedule(await schRes.json());
         if (progRes.ok) setProgress(await progRes.json());
@@ -63,7 +64,7 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch('/api/routines/progress', {
+      await fetch(apiUrl('/api/routines/progress'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ date: todayStr, progress: newProgress })
@@ -88,14 +89,14 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch('/api/routines', {
+      await fetch(apiUrl('/api/routines'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ schedule: sorted })
       });
 
       // Sync routine school/class blocks to Planner timetable
-      await fetch('/api/routines/sync-planner', {
+      await fetch(apiUrl('/api/routines/sync-planner'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

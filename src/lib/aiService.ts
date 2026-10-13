@@ -1,4 +1,5 @@
 import { auth } from './firebase';
+import { apiUrl } from './api';
 
 export type ProviderInfo = {
   provider: 'openrouter' | 'nvidia' | 'groq' | 'google';
@@ -18,7 +19,7 @@ export const simulateAiResponse = async (prompt: string | any[], customSystemPro
       body.messages = prompt;
     }
 
-    const response = await fetch('/api/ai/chat', {
+    const response = await fetch(apiUrl('/api/ai/chat'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ export const extractTextFromDocument = async (file: File): Promise<string> => {
           imagesBatch.push({ base64Data: base64, mimeType: 'image/jpeg' });
         }
 
-        const response = await fetch('/api/ai/gemini-vision', {
+        const response = await fetch(apiUrl('/api/ai/gemini-vision'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ export const extractTextFromDocument = async (file: File): Promise<string> => {
         reader.readAsDataURL(file);
       });
       
-      const response = await fetch('/api/ai/gemini-vision', {
+      const response = await fetch(apiUrl('/api/ai/gemini-vision'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +124,7 @@ export const generateFlashcards = async (content: string, userContext?: string):
   try {
     const currentUser = auth.currentUser;
     const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
-    const response = await fetch('/api/ai/flashcards', {
+    const response = await fetch(apiUrl('/api/ai/flashcards'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -148,7 +149,7 @@ export const extractRoutineFromData = async (rawData: string): Promise<{schedule
   try {
     const currentUser = auth.currentUser;
     const token = currentUser ? await currentUser.getIdToken() : localStorage.getItem('token');
-    const response = await fetch('/api/ai/extract-routine', {
+    const response = await fetch(apiUrl('/api/ai/extract-routine'), {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

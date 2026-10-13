@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { db, storage } from '../lib/firebase';
+import { apiUrl } from '../lib/api';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, query, where, onSnapshot, orderBy, doc, addDoc, serverTimestamp, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { Search, UserPlus, Send, Paperclip, Video, File, Mic, MessageCircle, Image as ImageIcon, Check, Loader2, Trash2, Download } from 'lucide-react';
@@ -90,7 +91,7 @@ export default function Messages() {
     e.preventDefault();
     if (!searchQuery) return;
     try {
-      const res = await fetch(`/api/users/search?q=${searchQuery}`, {
+      const res = await fetch(apiUrl(`/api/users/search?q=${searchQuery}`), {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -102,7 +103,7 @@ export default function Messages() {
 
   const sendFriendRequest = async (targetUsername: string) => {
     try {
-      await fetch('/api/friends/request', {
+      await fetch(apiUrl('/api/friends/request'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ targetUsername })
@@ -115,7 +116,7 @@ export default function Messages() {
 
   const acceptFriendRequest = async (friendshipId: string) => {
     try {
-      await fetch('/api/friends/accept', {
+      await fetch(apiUrl('/api/friends/accept'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ friendshipId })
@@ -149,7 +150,7 @@ export default function Messages() {
     
     try {
       if (msg.mediaUrl) {
-        await fetch('/api/cloudinary/delete', {
+        await fetch(apiUrl('/api/cloudinary/delete'), {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ mediaUrl: msg.mediaUrl })
@@ -176,7 +177,7 @@ export default function Messages() {
         // 1. SMART ROUTER: Attempt Cloudinary Upload first
         try {
           // Get signature from backend
-          const signRes = await fetch('/api/cloudinary/sign', {
+          const signRes = await fetch(apiUrl('/api/cloudinary/sign'), {
             headers: { Authorization: `Bearer ${token}` }
           });
           const { signature, timestamp, cloudName, apiKey } = await signRes.json();

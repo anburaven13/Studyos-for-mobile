@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw';
 import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
+import { apiUrl } from '../lib/api';
 
 type Message = {
   id: string;
@@ -93,7 +94,7 @@ export default function Tutor() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`/api/tutor/history`, {
+    fetch(apiUrl('/api/tutor/history'), {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(async r => {
@@ -110,7 +111,7 @@ export default function Tutor() {
             setMessages(prev => {
               // If local has more messages than cloud (e.g. typed offline), push local to cloud
               if (prev.length > data.length) {
-                fetch(`/api/tutor/history`, {
+                fetch(apiUrl('/api/tutor/history'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ messages: prev })
@@ -124,7 +125,7 @@ export default function Tutor() {
             // Cloud has no chat yet, but user has existing local chat! Push local to cloud
             setMessages(prev => {
               if (prev.length > 1) {
-                fetch(`/api/tutor/history`, {
+                fetch(apiUrl('/api/tutor/history'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ messages: prev })
@@ -150,7 +151,7 @@ export default function Tutor() {
     if (messages.length <= 1) return;
 
     const timer = setTimeout(() => {
-      fetch(`/api/tutor/history`, {
+      fetch(apiUrl('/api/tutor/history'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ messages })
@@ -233,7 +234,7 @@ export default function Tutor() {
 
       if (token) {
         try {
-          await fetch(`/api/tutor/history`, {
+          await fetch(apiUrl('/api/tutor/history'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ messages: reset, clear: true })
