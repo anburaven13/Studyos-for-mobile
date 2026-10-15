@@ -19,6 +19,22 @@ export default function Login() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   
+  // Only render and stream video on PC / desktop screens (>= 768px)
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const { token, syncUser } = useAuth();
   const navigate = useNavigate();
 
@@ -148,14 +164,21 @@ export default function Login() {
   if (show2FA) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
-        >
-          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
-        </video>
+        {isDesktop ? (
+          <video autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+          >
+            <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+          </video>
+        ) : (
+          <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
+            <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
+          </div>
+        )}
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Two-Factor Authentication</h1>
@@ -210,14 +233,21 @@ export default function Login() {
   if (showForgot) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        <video autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
-        >
-          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
-        </video>
+        {isDesktop ? (
+          <video autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+          >
+            <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+          </video>
+        ) : (
+          <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
+            <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
+          </div>
+        )}
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Reset Password</h1>
@@ -284,14 +314,21 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-      <video autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
-      >
-        <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
-      </video>
+      {isDesktop ? (
+        <video autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 -z-0 object-cover min-w-full min-h-full opacity-60 pointer-events-none"
+        >
+          <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
+        </video>
+      ) : (
+        <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
+          <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
+        </div>
+      )}
       <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
         <div className="content relative z-20">
           <div className="flex justify-center mb-6">
