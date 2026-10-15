@@ -401,7 +401,7 @@ export default function Messages() {
   };
 
   return (
-    <div className="flex-1 flex w-full h-[calc(100vh-3.5rem-72px)] md:h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
+    <div className="flex w-full h-[calc(100dvh-3.5rem-72px)] md:h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
       
       {/* =========================================================================
           LEFT PANE (Friends List, Dedicated Requests, Search)
@@ -721,7 +721,7 @@ export default function Messages() {
         flex-1 flex-col h-full bg-background relative z-0 overflow-hidden
       `}>
         {activeFriend ? (
-          <div className="flex flex-col h-full w-full">
+          <div className="flex flex-col h-full w-full min-h-0">
             
             {/* Top Chat Header */}
             <div className="h-16 border-b border-border/60 flex items-center justify-between px-4 md:px-6 bg-card/70 backdrop-blur-xl shrink-0">
@@ -771,7 +771,7 @@ export default function Messages() {
             </div>
             
             {/* Messages Scroll Area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6 space-y-3.5">
               {messages.length === 0 ? (
                 <div className="text-center text-xs text-muted-foreground my-12 space-y-2">
                   <div className="w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
@@ -915,7 +915,7 @@ export default function Messages() {
             </div>
 
             {/* Subtle Auto-Deletion Disclaimer */}
-            <div className="px-4 py-1.5 text-[10px] text-muted-foreground/70 text-center bg-card/50 border-t border-border/30">
+            <div className="px-4 py-1.5 text-[10px] text-muted-foreground/70 text-center bg-card/50 border-t border-border/30 shrink-0">
               Attachments auto-delete after 30 days to protect storage and privacy.
             </div>
           </div>

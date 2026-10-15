@@ -103,8 +103,15 @@ export default function StudyTimer() {
 
   // Minimized Floating Pill on Mobile
   if (isMinimized) {
+    if (isMessages && !isRunning) {
+      return null;
+    }
+
     return (
-      <div className="fixed bottom-[80px] right-3 md:bottom-6 md:right-6 z-40 transition-all duration-300">
+      <div className={cn(
+        "fixed z-40 transition-all duration-300",
+        isMessages ? "bottom-[140px] right-3 md:bottom-6 md:right-6" : "bottom-[80px] right-3 md:bottom-6 md:right-6"
+      )}>
         <button
           onClick={() => setIsMinimized(false)}
           className={cn(
@@ -126,7 +133,8 @@ export default function StudyTimer() {
   // Expanded View
   return (
     <div className={cn(
-      "fixed bottom-[80px] right-3 md:bottom-6 md:right-6 z-40 flex items-center space-x-2.5 bg-card/95 border shadow-2xl rounded-full px-3.5 py-2 backdrop-blur-xl transition-all duration-300",
+      "fixed z-40 flex items-center space-x-2.5 bg-card/95 border shadow-2xl rounded-full px-3.5 py-2 backdrop-blur-xl transition-all duration-300",
+      isMessages ? "bottom-[140px] right-3 md:bottom-6 md:right-6" : "bottom-[80px] right-3 md:bottom-6 md:right-6",
       isRunning ? "border-primary/50 shadow-primary/20" : "border-border/80"
     )}>
       <div className={cn(
