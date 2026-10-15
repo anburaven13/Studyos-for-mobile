@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { 
   Search, UserPlus, Send, Paperclip, File, MessageCircle, 
   Check, Loader2, Trash2, Download, ArrowLeft, X, 
-  User, CheckCheck, Clock, ShieldCheck, UserCheck, Sparkles, ExternalLink
+  User, CheckCheck, ShieldCheck, UserCheck, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiUrl } from '../lib/api';

@@ -115,7 +115,7 @@ export default function Notes() {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [activeNote?.content, activeNote?.title, activeNote?.folder, activeNote?.tags]);
+  }, [activeNote?.id, activeNote?.content, activeNote?.title, activeNote?.folder, activeNote?.tags]);
 
   const updateActiveNoteContent = (newContent: string) => {
     setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, content: newContent } : n));

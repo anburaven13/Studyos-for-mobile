@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2, Trash2 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -27,7 +27,7 @@ export default function Tutor() {
     content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?"
   };
 
-  const getStorageKey = () => (user?.id ? `tutor_messages_${user.id}` : 'tutor_messages');
+  const getStorageKey = useCallback(() => (user?.id ? `tutor_messages_${user.id}` : 'tutor_messages'), [user?.id]);
 
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
@@ -46,7 +46,7 @@ export default function Tutor() {
       content: "Hello! I'm your StudyOS AI Tutor. I can help explain difficult concepts, solve math problems, or test your knowledge. What would you like to study today?"
     }];
   });
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [_isLoadingHistory, setIsLoadingHistory] = useState(false);
   const isInitialSyncDone = useRef(false);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -88,7 +88,7 @@ export default function Tutor() {
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
-  }, [messages, user?.id]);
+  }, [messages, user?.id, getStorageKey]);
 
   // Two-way smart cloud sync with MongoDB
   useEffect(() => {
