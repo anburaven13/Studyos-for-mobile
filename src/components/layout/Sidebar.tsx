@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       )}>
         <div className="h-16 flex items-center px-6 border-b relative">
           <span className="font-bold text-lg tracking-tight flex items-center space-x-2">
-            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs">S</div>
+            <img src="/favicon.svg" alt="StudyOS" className="w-6 h-6 rounded-md object-contain shadow-sm border border-white/10" />
             <span>StudyOS</span>
           </span>
           {isOpen && onClose && (

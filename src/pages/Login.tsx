@@ -178,7 +178,7 @@ export default function Login() {
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <div className="flex items-center justify-center gap-2.5 mb-6">
-              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain" />
+              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain rounded-lg shadow-md border border-white/10" />
               <span className="text-xl font-bold tracking-tight text-white">StudyOS</span>
             </div>
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Two-Factor Authentication</h1>
@@ -246,7 +246,7 @@ export default function Login() {
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
             <div className="flex items-center justify-center gap-2.5 mb-6">
-              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain" />
+              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain rounded-lg shadow-md border border-white/10" />
               <span className="text-xl font-bold tracking-tight text-white">StudyOS</span>
             </div>
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Reset Password</h1>
@@ -326,7 +326,7 @@ export default function Login() {
       <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
         <div className="content relative z-20">
           <div className="flex items-center justify-center gap-2.5 mb-6">
-            <img src="/favicon.svg" alt="StudyOS" className="w-9 h-9 object-contain" />
+            <img src="/favicon.svg" alt="StudyOS" className="w-9 h-9 object-contain rounded-xl shadow-md border border-white/10" />
             <span className="text-2xl font-bold tracking-tight text-white">StudyOS</span>
           </div>
         <h1 className="text-2xl font-bold text-center mb-2 text-white">

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 
@@ -68,7 +67,7 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer text-white" onClick={() => scrollTo('about')}>
-          <Brain className="w-6 h-6" />
+          <img src="/favicon.svg" alt="StudyOS" className="w-6 h-6 rounded-md object-contain shadow-sm border border-white/10" />
           <span className="text-xl font-bold tracking-tight">StudyOS</span>
         </div>
 
@@ -514,7 +513,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-24">
             <div className="col-span-1">
               <div className="flex items-center gap-2 text-white mb-4">
-                <Brain className="w-6 h-6" />
+                <img src="/favicon.svg" alt="StudyOS" className="w-6 h-6 rounded-md object-contain shadow-sm border border-white/10" />
                 <span className="text-xl font-bold tracking-tight">StudyOS</span>
               </div>
               <p className="text-sm text-gray-400">Study smarter, not harder.</p>

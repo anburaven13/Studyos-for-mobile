@@ -40,7 +40,7 @@ export default function AppLayout() {
         {/* Mobile Header (simplified for clean look since bottom nav exists) */}
         <div className="md:hidden h-14 border-b border-white/10 flex items-center px-4 justify-between bg-black/40 backdrop-blur-3xl backdrop-saturate-200 z-30 sticky top-0 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
           <span className="font-bold tracking-tight flex items-center space-x-2">
-            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs">S</div>
+            <img src="/favicon.svg" alt="StudyOS" className="w-6 h-6 rounded-md object-contain shadow-sm border border-white/10" />
             <span>StudyOS</span>
           </span>
           <button onClick={() => navigate('/app/settings')} className="p-2 -mr-2 text-muted-foreground hover:text-foreground">
