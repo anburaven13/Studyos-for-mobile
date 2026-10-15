@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { apiUrl } from '../lib/api';
@@ -10,6 +10,7 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [show2FA, setShow2FA] = useState(false);
@@ -164,7 +165,7 @@ export default function Login() {
   if (show2FA) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        {isDesktop ? (
+        {isDesktop && (
           <video autoPlay
             loop
             muted
@@ -173,14 +174,13 @@ export default function Login() {
           >
             <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
           </video>
-        ) : (
-          <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
-            <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
-            <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
-          </div>
         )}
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
+            <div className="flex items-center justify-center gap-2.5 mb-6">
+              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain" />
+              <span className="text-xl font-bold tracking-tight text-white">StudyOS</span>
+            </div>
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Two-Factor Authentication</h1>
             <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
             Enter the 6-digit code from your authenticator app
@@ -233,7 +233,7 @@ export default function Login() {
   if (showForgot) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-        {isDesktop ? (
+        {isDesktop && (
           <video autoPlay
             loop
             muted
@@ -242,14 +242,13 @@ export default function Login() {
           >
             <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
           </video>
-        ) : (
-          <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
-            <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
-            <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
-          </div>
         )}
         <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
           <div className="content relative z-20">
+            <div className="flex items-center justify-center gap-2.5 mb-6">
+              <img src="/favicon.svg" alt="StudyOS" className="w-8 h-8 object-contain" />
+              <span className="text-xl font-bold tracking-tight text-white">StudyOS</span>
+            </div>
             <h1 className="text-2xl font-bold text-center mb-2 text-white">Reset Password</h1>
             <p className="text-gray-300 text-center mb-8 text-sm drop-shadow-md">
             Enter your email to receive a password reset link
@@ -314,7 +313,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden z-0">
-      {isDesktop ? (
+      {isDesktop && (
         <video autoPlay
           loop
           muted
@@ -323,19 +322,13 @@ export default function Login() {
         >
           <source src="https://cdn.sceneai.art/Hero%20Section%20Video/50b4f304-cdca-4e12-8735-580d225834be.mp4" type="video/mp4" />
         </video>
-      ) : (
-        <div className="absolute inset-0 pointer-events-none -z-0 overflow-hidden">
-          <div className="absolute -top-32 -left-32 w-80 h-80 rounded-full bg-indigo-600/20 blur-[100px]" />
-          <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-purple-600/20 blur-[100px]" />
-        </div>
       )}
       <div className="bg-[#1C1C1E]/80 backdrop-blur-xl w-full max-w-md rounded-[32px] p-8 border border-white/10 shadow-2xl relative z-10">
         <div className="content relative z-20">
-          <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary" />
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <img src="/favicon.svg" alt="StudyOS" className="w-9 h-9 object-contain" />
+            <span className="text-2xl font-bold tracking-tight text-white">StudyOS</span>
           </div>
-        </div>
         <h1 className="text-2xl font-bold text-center mb-2 text-white">
           {isLogin ? 'Welcome back' : 'Create an account'}
         </h1>
@@ -374,14 +367,29 @@ export default function Login() {
                 </button>
               )}
             </div>
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg px-4 py-2.5 outline-none transition-colors"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/10 border-white/20 focus:border-white text-white placeholder:text-gray-400 rounded-lg pl-4 pr-11 py-2.5 outline-none transition-colors"
+                placeholder="••••••••"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors p-1 focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
           
           <button 
