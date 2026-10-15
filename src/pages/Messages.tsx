@@ -941,25 +941,34 @@ export default function Messages() {
          ========================================================================= */}
       <AnimatePresence>
         {viewingProfile && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
+          <div 
+            onClick={() => setViewingProfile(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 cursor-pointer"
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md bg-card border border-border/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-card border border-border/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden cursor-default"
             >
               {/* Background Ambient Glow */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-[80px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 blur-[80px] rounded-full pointer-events-none -z-10" />
 
-              {/* Close Button */}
+              {/* Close Button (z-30 ensures it sits above all elements) */}
               <button
-                onClick={() => setViewingProfile(null)}
-                className="absolute top-4 right-4 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewingProfile(null);
+                }}
+                className="absolute top-4 right-4 z-30 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="text-center pt-2 pb-6 space-y-4 relative z-10">
+              <div className="text-center pt-2 pb-2 space-y-4 relative z-10">
                 {/* Large Avatar */}
                 <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary to-purple-600 text-white font-bold text-2xl mx-auto flex items-center justify-center shadow-lg border-2 border-primary/30">
                   {getInitials(viewingProfile.username)}
@@ -995,6 +1004,7 @@ export default function Messages() {
                   {friends.some(f => f.friendId === viewingProfile.uid) ? (
                     <>
                       <button
+                        type="button"
                         onClick={() => {
                           const friendObj = friends.find(f => f.friendId === viewingProfile.uid);
                           if (friendObj) setActiveFriend(friendObj);
@@ -1007,6 +1017,7 @@ export default function Messages() {
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => {
                           const friendObj = friends.find(f => f.friendId === viewingProfile.uid);
                           if (friendObj) removeFriend(friendObj.id);
@@ -1019,6 +1030,7 @@ export default function Messages() {
                   ) : pendingRequests.some(r => r.requester === viewingProfile.uid) ? (
                     <div className="grid grid-cols-2 gap-2">
                       <button
+                        type="button"
                         onClick={() => {
                           const req = pendingRequests.find(r => r.requester === viewingProfile.uid);
                           if (req) acceptFriendRequest(req.id, viewingProfile.username);
@@ -1030,6 +1042,7 @@ export default function Messages() {
                         <span>Accept Request</span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           const req = pendingRequests.find(r => r.requester === viewingProfile.uid);
                           if (req) declineFriendRequest(req.id);
@@ -1042,6 +1055,7 @@ export default function Messages() {
                     </div>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => {
                         sendFriendRequest(viewingProfile.username);
                         setViewingProfile(null);
@@ -1052,6 +1066,14 @@ export default function Messages() {
                       <span>Send Friend Request</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => setViewingProfile(null)}
+                    className="w-full py-2 text-xs text-muted-foreground hover:text-foreground transition-colors font-medium rounded-xl hover:bg-white/5"
+                  >
+                    Close
+                  </button>
                 </div>
 
               </div>
