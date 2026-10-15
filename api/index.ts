@@ -532,10 +532,27 @@ app.post('/api/friends/request', authenticateToken, async (req: any, res: any) =
       return res.status(400).json({ error: 'Friendship or request already exists' });
     }
 
+    // Fetch requester username from Firestore
+    let requesterUsername = 'User';
+    try {
+      const reqUserDoc = await firestore.collection('users').doc(req.user.uid).get();
+      if (reqUserDoc.exists && reqUserDoc.data()?.username) {
+        requesterUsername = reqUserDoc.data()?.username;
+      }
+    } catch (e) {
+      console.warn('Could not fetch requester username:', e);
+    }
+
     await firestore.collection('friendships').doc(friendshipId).set({
       users: [req.user.uid, targetUid],
       status: 'pending',
       requester: req.user.uid,
+      requesterUsername,
+      targetUsername: targetUsername,
+      usernames: {
+        [req.user.uid]: requesterUsername,
+        [targetUid]: targetUsername
+      },
       createdAt: new Date().toISOString()
     });
     
@@ -567,6 +584,117 @@ app.post('/api/friends/accept', authenticateToken, async (req: any, res: any) =>
     res.json({ success: true });
   } catch (error: any) {
     console.error('Accept friend error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/friends/decline', authenticateToken, async (req: any, res: any) => {
+  const { friendshipId } = req.body;
+  if (!friendshipId) return res.status(400).json({ error: 'friendshipId required' });
+  
+  try {
+    const friendDoc = await firestore.collection('friendships').doc(friendshipId).get();
+    if (!friendDoc.exists) return res.status(404).json({ error: 'Request not found' });
+    
+    const data = friendDoc.data()!;
+    if (!data.users.includes(req.user.uid)) return res.status(403).json({ error: 'Forbidden' });
+
+    await firestore.collection('friendships').doc(friendshipId).delete();
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Decline friend error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/friends/remove', authenticateToken, async (req: any, res: any) => {
+  const { friendshipId } = req.body;
+  if (!friendshipId) return res.status(400).json({ error: 'friendshipId required' });
+  
+  try {
+    const friendDoc = await firestore.collection('friendships').doc(friendshipId).get();
+    if (!friendDoc.exists) return res.status(404).json({ error: 'Friendship not found' });
+    
+    const data = friendDoc.data()!;
+    if (!data.users.includes(req.user.uid)) return res.status(403).json({ error: 'Forbidden' });
+
+    await firestore.collection('friendships').doc(friendshipId).delete();
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Remove friend error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/users/by-uids', authenticateToken, async (req: any, res: any) => {
+  const { uids } = req.body;
+  if (!Array.isArray(uids) || uids.length === 0) {
+    return res.json({ users: {} });
+  }
+  
+  const targetUids = uids.filter(id => typeof id === 'string' && id.trim().length > 0).slice(0, 50);
+  const result: Record<string, any> = {};
+  
+  try {
+    const userDocs = await Promise.all(
+      targetUids.map(uid => firestore.collection('users').doc(uid).get())
+    );
+    
+    userDocs.forEach(doc => {
+      if (doc.exists) {
+        const data = doc.data()!;
+        result[doc.id] = {
+          uid: doc.id,
+          username: data.username || null,
+          email: data.email || null,
+          class_level: data.class_level || null,
+          board: data.board || null,
+          createdAt: data.createdAt || null
+        };
+      }
+    });
+    
+    res.json({ users: result });
+  } catch (err: any) {
+    console.error('Failed to fetch user profiles by uids:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/users/profile/:username', authenticateToken, async (req: any, res: any) => {
+  const { username } = req.params;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  
+  try {
+    const usernameDoc = await firestore.collection('usernames').doc(username.toLowerCase()).get();
+    if (!usernameDoc.exists) return res.status(404).json({ error: 'User not found' });
+    
+    const uid = usernameDoc.data()?.uid;
+    const userDoc = await firestore.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ error: 'User profile not found' });
+    
+    const data = userDoc.data()!;
+    let pgUser: any = null;
+    if (data.postgresId) {
+      try {
+        const pgUsers = await sql`SELECT class_level, board, created_at FROM users WHERE id = ${data.postgresId}`;
+        if (pgUsers.length > 0) pgUser = pgUsers[0];
+      } catch (pgErr) {
+        console.warn('Postgres profile fetch error:', pgErr);
+      }
+    }
+    
+    res.json({
+      user: {
+        uid,
+        username: data.username,
+        class_level: pgUser?.class_level || data.class_level || 'High School',
+        board: pgUser?.board || data.board || 'ICSE/CBSE',
+        createdAt: pgUser?.created_at || data.createdAt
+      }
+    });
+  } catch (err: any) {
+    console.error('Failed to get user profile:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
