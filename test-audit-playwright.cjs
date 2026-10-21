@@ -27,11 +27,48 @@ const logHeader = (section) => {
   console.log(`\n${colors.bright}${colors.magenta}=== ${section} ===${colors.reset}`);
 };
 
+const { spawn, execSync } = require('child_process');
+
+async function isPortReachable(url) {
+  try {
+    await fetch(url, { signal: AbortSignal.timeout(1500) });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function startServerIfNeeded(name, url, cmd, args, spawnedProcesses) {
+  const reachable = await isPortReachable(url);
+  if (reachable) {
+    console.log(`${colors.cyan}[INFO] ${name} is already running on ${url}${colors.reset}`);
+    return;
+  }
+  console.log(`${colors.yellow}[INFO] Starting ${name} on ${url}...${colors.reset}`);
+  const child = spawn(cmd, args, { shell: true, stdio: 'ignore', detached: false });
+  spawnedProcesses.push(child);
+  
+  const start = Date.now();
+  while (Date.now() - start < 20000) {
+    await new Promise(r => setTimeout(r, 600));
+    if (await isPortReachable(url)) {
+      console.log(`${colors.green}[INFO] ${name} is ready on ${url}${colors.reset}`);
+      return;
+    }
+  }
+  throw new Error(`Timeout waiting for ${name} to start on ${url}`);
+}
+
 (async () => {
+  const spawnedProcesses = [];
   const screenshotsDir = path.join(__dirname, 'test_screenshots');
   if (!fs.existsSync(screenshotsDir)) {
     fs.mkdirSync(screenshotsDir, { recursive: true });
   }
+
+  // Ensure frontend and backend are up
+  await startServerIfNeeded('Frontend Preview', 'http://localhost:5173', 'npx', ['vite', 'preview', '--port', '5173'], spawnedProcesses);
+  await startServerIfNeeded('Backend API', 'http://localhost:5000', 'npx', ['tsx', 'api/index.ts'], spawnedProcesses);
 
   const browser = await chromium.launch({ headless: true });
   let totalTests = 0;
@@ -383,7 +420,18 @@ const logHeader = (section) => {
     }
 
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
+    for (const child of spawnedProcesses) {
+      try {
+        if (process.platform === 'win32') {
+          execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' });
+        } else {
+          child.kill('SIGTERM');
+        }
+      } catch {}
+    }
   }
 
   // =========================================================================
