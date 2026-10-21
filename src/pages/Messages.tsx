@@ -21,9 +21,14 @@ const isSafeAttachmentUrl = (url?: string): boolean => {
   if (!url || typeof url !== 'string') return false;
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'https:' && (
-      parsed.hostname.endsWith('cloudinary.com') ||
-      parsed.hostname.endsWith('firebasestorage.app')
+    if (parsed.protocol !== 'https:') return false;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host === 'cloudinary.com' ||
+      host.endsWith('.cloudinary.com') ||
+      host === 'firebasestorage.googleapis.com' ||
+      host === 'storage.googleapis.com' ||
+      host.endsWith('.firebasestorage.app')
     );
   } catch {
     return false;
