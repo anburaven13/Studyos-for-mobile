@@ -8,7 +8,6 @@ import {
   User, CheckCheck, ShieldCheck, UserCheck, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { apiUrl } from '../lib/api';
 
 interface UserProfile {
   uid: string;
@@ -17,6 +16,19 @@ interface UserProfile {
   board?: string;
   createdAt?: string;
 }
+
+const isSafeAttachmentUrl = (url?: string): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && (
+      parsed.hostname.endsWith('cloudinary.com') ||
+      parsed.hostname.endsWith('firebasestorage.app')
+    );
+  } catch {
+    return false;
+  }
+};
 
 export default function Messages() {
   const { user, token } = useAuth();
@@ -116,7 +128,7 @@ export default function Messages() {
     const fetchProfiles = async () => {
       setLoadingProfiles(true);
       try {
-        const res = await fetch(apiUrl('/api/users/by-uids'), {
+        const res = await fetch('/api/users/by-uids', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -206,7 +218,7 @@ export default function Messages() {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
     try {
-      const res = await fetch(apiUrl(`/api/users/search?q=${encodeURIComponent(searchQuery.trim().replace('@', ''))}`), {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery.trim().replace('@', ''))}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -221,7 +233,7 @@ export default function Messages() {
   // Send Friend Request
   const sendFriendRequest = async (targetUsername: string) => {
     try {
-      const res = await fetch(apiUrl('/api/friends/request'), {
+      const res = await fetch('/api/friends/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ targetUsername })
@@ -244,7 +256,7 @@ export default function Messages() {
   // Accept Friend Request
   const acceptFriendRequest = async (friendshipId: string, username: string) => {
     try {
-      const res = await fetch(apiUrl('/api/friends/accept'), {
+      const res = await fetch('/api/friends/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ friendshipId })
@@ -261,7 +273,7 @@ export default function Messages() {
   // Decline Friend Request
   const declineFriendRequest = async (friendshipId: string) => {
     try {
-      await fetch(apiUrl('/api/friends/decline'), {
+      await fetch('/api/friends/decline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ friendshipId })
@@ -275,7 +287,7 @@ export default function Messages() {
   const removeFriend = async (friendshipId: string) => {
     if (!confirm('Are you sure you want to remove this friend?')) return;
     try {
-      await fetch(apiUrl('/api/friends/remove'), {
+      await fetch('/api/friends/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ friendshipId })
@@ -300,7 +312,7 @@ export default function Messages() {
     });
 
     try {
-      const res = await fetch(apiUrl(`/api/users/profile/${encodeURIComponent(targetUsername)}`), {
+      const res = await fetch(`/api/users/profile/${encodeURIComponent(targetUsername)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -339,10 +351,10 @@ export default function Messages() {
     if (!user?.uid || msg.senderId !== user.uid) return;
     try {
       if (msg.mediaUrl) {
-        await fetch(apiUrl('/api/cloudinary/delete'), {
+        await fetch('/api/cloudinary/delete', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ mediaUrl: msg.mediaUrl })
+          body: JSON.stringify({ mediaUrl: msg.mediaUrl, messageId: msg.id })
         });
       }
       await deleteDoc(doc(db, 'messages', msg.id));
@@ -364,7 +376,7 @@ export default function Messages() {
       if (file.type.startsWith('video/') || file.type.startsWith('image/')) {
         finalType = file.type.startsWith('video/') ? 'video' : 'image';
         
-        const signRes = await fetch(apiUrl('/api/cloudinary/sign'), {
+        const signRes = await fetch('/api/cloudinary/sign', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const { signature, timestamp, cloudName, apiKey } = await signRes.json();
@@ -788,9 +800,9 @@ export default function Messages() {
                       <div className="flex items-center space-x-2 w-full max-w-full">
                         {isMine && (
                           <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity ml-auto">
-                            {msg.mediaUrl && (
+                            {msg.mediaUrl && isSafeAttachmentUrl(msg.mediaUrl) && (
                               <button 
-                                onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} 
+                                onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank', 'noopener,noreferrer')} 
                                 className="p-1 hover:bg-white/10 rounded-lg text-muted-foreground hover:text-foreground transition-colors" 
                                 title="Download Media"
                               >
@@ -821,8 +833,8 @@ export default function Messages() {
                               {msg.mediaType === 'video' && (
                                 <video src={msg.mediaUrl} controls className="rounded-xl max-h-64 w-full" />
                               )}
-                              {msg.mediaType === 'file' && (
-                                <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="flex items-center space-x-2 text-xs underline py-1">
+                              {msg.mediaType === 'file' && isSafeAttachmentUrl(msg.mediaUrl) && (
+                                <a href={msg.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-xs underline py-1">
                                   <File className="w-4 h-4" /> <span>Download Document</span>
                                 </a>
                               )}
@@ -833,9 +845,9 @@ export default function Messages() {
 
                         {!isMine && (
                           <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-opacity mr-auto">
-                            {msg.mediaUrl && (
+                            {msg.mediaUrl && isSafeAttachmentUrl(msg.mediaUrl) && (
                               <button 
-                                onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank')} 
+                                onClick={() => window.open(msg.mediaUrl.replace('/upload/', '/upload/fl_attachment/'), '_blank', 'noopener,noreferrer')} 
                                 className="p-1 hover:bg-white/10 rounded-lg text-muted-foreground hover:text-foreground transition-colors" 
                                 title="Download Media"
                               >

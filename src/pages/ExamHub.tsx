@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Plus, X, Trash, Upload, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { apiUrl } from '../lib/api';
+import { compressImageForOcr } from '../lib/aiService';
 
 export default function ExamHub() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
@@ -15,7 +15,7 @@ export default function ExamHub() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const res = await fetch(apiUrl('/api/exams'), {
+      const res = await fetch('/api/exams', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -67,7 +67,7 @@ export default function ExamHub() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(apiUrl(`/api/exams/${id}`), {
+      await fetch(`/api/exams/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -85,7 +85,7 @@ export default function ExamHub() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(apiUrl(`/api/exams/${subjects[index].id}`), {
+      await fetch(`/api/exams/${subjects[index].id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ export default function ExamHub() {
     if (!token) return;
 
     try {
-      const res = await fetch(apiUrl('/api/exams'), {
+      const res = await fetch('/api/exams', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -133,47 +133,47 @@ export default function ExamHub() {
     setIsExtracting(true);
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result as string;
+      const base64String = await compressImageForOcr(file);
 
-        const res = await fetch(apiUrl('/api/exams/extract'), {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
-          },
-          body: JSON.stringify({ imageBase64: base64String })
-        });
+      const res = await fetch('/api/exams/extract', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ imageBase64: base64String })
+      });
 
-        if (res.ok) {
-          const extractedExams = await res.json();
-          // For each extracted exam, create it
-          for (const exam of extractedExams) {
-            if (exam.name && exam.date) {
-              await fetch(apiUrl('/api/exams'), {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({ name: exam.name, date: exam.date, confidence: 50 })
-              });
-            }
+      if (res.ok) {
+        const extractedExams = await res.json();
+        // For each extracted exam, create it
+        for (const exam of extractedExams) {
+          if (exam.name && exam.date) {
+            await fetch('/api/exams', {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+              },
+              body: JSON.stringify({ name: exam.name, date: exam.date, confidence: 50 })
+            });
           }
-          fetchExams();
-          setIsModalOpen(false);
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          console.error("Failed to extract exams from image:", errData);
-          alert(errData.error || "Failed to extract exams from the image. Please try again or add manually.");
         }
-        setIsExtracting(false);
-      };
-      reader.readAsDataURL(file);
+        fetchExams();
+        setIsModalOpen(false);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Failed to extract exams from image:", errData);
+        alert(errData.error || "Failed to extract exams from the image. Please try again or add manually.");
+      }
     } catch (err) {
       console.error(err);
+      alert("An error occurred while uploading the image. Please try again.");
+    } finally {
       setIsExtracting(false);
+      if (e.target) {
+        e.target.value = '';
+      }
     }
   };
 

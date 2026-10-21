@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
 import { Sparkles, Loader2, Eye, EyeOff } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-import { apiUrl } from '../lib/api';
+import { useEffect } from 'react';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,30 +20,26 @@ export default function Login() {
   const [showForgot, setShowForgot] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   
-  // Only render and stream video on PC / desktop screens (>= 768px)
+  // Only render and stream video on real PC / desktop screens (>= 768px and non-mobile app)
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768;
+      const isMobileApp = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || !!(window as any).Capacitor?.isNativePlatform?.();
+      return window.innerWidth >= 768 && !isMobileApp;
     }
     return false;
   });
 
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 768);
+      const isMobileApp = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || !!(window as any).Capacitor?.isNativePlatform?.();
+      setIsDesktop(window.innerWidth >= 768 && !isMobileApp);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { token, syncUser } = useAuth();
+  const { syncUser } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (token) {
-      navigate('/app', { replace: true });
-    }
-  }, [token, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,7 +101,7 @@ export default function Login() {
     setError('');
     
     try {
-      const res = await fetch(apiUrl('/api/2fa/verify'), {
+      const res = await fetch('/api/2fa/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +139,7 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(apiUrl('/api/auth/reset-password'), {
+      const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
