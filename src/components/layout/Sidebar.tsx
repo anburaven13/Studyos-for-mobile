@@ -80,7 +80,9 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               <Search className="w-3.5 h-3.5 text-primary" />
               <span>Search or Jump...</span>
             </div>
-            <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono">⌘K</kbd>
+            <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono">
+              {typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/.test(navigator.userAgent) ? '⌘K' : 'Ctrl+K'}
+            </kbd>
           </button>
         </div>
         

@@ -24,7 +24,12 @@ export default function AppLayout() {
   useHotkeys('ctrl+k, meta+k', (e) => {
     e.preventDefault();
     window.dispatchEvent(new CustomEvent('studyos:open-command-palette'));
-  });
+  }, { enableOnFormTags: true, preventDefault: true });
+
+  useHotkeys('ctrl+p, meta+p', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('studyos:open-command-palette'));
+  }, { enableOnFormTags: true, preventDefault: true });
 
   useEffect(() => {
     const handleOpenMath = (e: any) => {

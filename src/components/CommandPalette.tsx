@@ -17,7 +17,8 @@ import {
   Sparkles, 
   SunMoon, 
   LineChart,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
@@ -31,23 +32,41 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
 
-  // Global Ctrl+K / Cmd+K listener & custom event
+  // Global Ctrl+K / Cmd+K / Ctrl+P listener & ESC closer
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+      // 1. Close on ESC key
+      if (e.key === 'Escape' || e.code === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
+        return;
+      }
+
+      // 2. Toggle on Ctrl+K, Cmd+K, Ctrl+P, Cmd+P
+      const isK = e.key === 'k' || e.key === 'K' || e.code === 'KeyK';
+      const isP = e.key === 'p' || e.key === 'P' || e.code === 'KeyP';
+      const isModifier = e.metaKey || e.ctrlKey;
+
+      if (isModifier && (isK || isP)) {
+        e.preventDefault();
+        e.stopPropagation();
         setOpen((prev) => !prev);
       }
     };
 
     const handleCustomOpen = () => setOpen(true);
+    const handleCustomClose = () => setOpen(false);
 
-    document.addEventListener('keydown', down);
+    // capture: true ensures we intercept before input elements or browser shortcuts swallow it
+    window.addEventListener('keydown', down, { capture: true });
     window.addEventListener('studyos:open-command-palette', handleCustomOpen);
+    window.addEventListener('studyos:close-command-palette', handleCustomClose);
 
     return () => {
-      document.removeEventListener('keydown', down);
+      window.removeEventListener('keydown', down, { capture: true });
       window.removeEventListener('studyos:open-command-palette', handleCustomOpen);
+      window.removeEventListener('studyos:close-command-palette', handleCustomClose);
     };
   }, []);
 
@@ -79,9 +98,16 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
               className="w-full py-4 bg-transparent outline-none text-sm placeholder:text-muted-foreground/60"
               autoFocus
             />
-            <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-muted-foreground bg-muted border border-border rounded">
-              ESC
-            </kbd>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex items-center space-x-1 px-2.5 py-1 text-[11px] font-mono text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 border border-border rounded-md transition-all cursor-pointer shadow-sm active:scale-95"
+              title="Close palette (Esc)"
+              aria-label="Close command palette"
+            >
+              <span>ESC</span>
+              <X className="w-3.5 h-3.5 opacity-70" />
+            </button>
           </div>
 
           {/* Results List */}
@@ -252,4 +278,8 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
  */
 export function openCommandPalette() {
   window.dispatchEvent(new CustomEvent('studyos:open-command-palette'));
+}
+
+export function closeCommandPalette() {
+  window.dispatchEvent(new CustomEvent('studyos:close-command-palette'));
 }
