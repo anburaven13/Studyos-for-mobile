@@ -38,54 +38,6 @@ interface DialItem {
   keywords: string[];
 }
 
-/**
- * Photorealistic 3D Liquid Water Droplet
- * Renders a physical water bead with specular glint, refractive core, and caustic shadow.
- */
-function WaterDrop({
-  size = 11,
-  top,
-  left,
-  right,
-  bottom,
-  rotation = 0,
-  elongation = 1.05
-}: {
-  size?: number;
-  top?: string | number;
-  left?: string | number;
-  right?: string | number;
-  bottom?: string | number;
-  rotation?: number;
-  elongation?: number;
-}) {
-  return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size * elongation}px`,
-        top,
-        left,
-        right,
-        bottom,
-        transform: `rotate(${rotation}deg)`
-      }}
-      className="absolute pointer-events-none z-30 rounded-[52%_48%_55%_45%/45%_55%_45%_55%] border border-white/50 bg-gradient-to-br from-white/40 via-white/5 to-black/20 shadow-[0_2px_4px_rgba(0,0,0,0.5),inset_0_-1.5px_2px_rgba(255,255,255,0.6),inset_0_1.5px_2.5px_rgba(0,0,0,0.3)] backdrop-blur-[1.5px]"
-    >
-      {/* Specular White Primary Light Catch */}
-      <div 
-        style={{ width: `${Math.max(2.5, size * 0.35)}px`, height: `${Math.max(1.8, size * 0.22)}px` }}
-        className="absolute top-[16%] left-[20%] rounded-full bg-white opacity-95 shadow-[0_0_2px_#ffffff]" 
-      />
-      {/* Internal Liquid Caustic Glow */}
-      <div 
-        style={{ width: `${Math.max(2, size * 0.3)}px`, height: `${Math.max(1.5, size * 0.2)}px` }}
-        className="absolute bottom-[16%] right-[22%] rounded-full bg-white/60 blur-[0.4px]" 
-      />
-    </div>
-  );
-}
-
 export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -495,10 +447,6 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
               {/* Glass Top Bevel Reflection */}
               <div className="absolute top-0 left-0 right-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none" />
 
-              {/* Water Droplets Sitting on Central Lens */}
-              <WaterDrop size={8} top="12%" right="22%" rotation={20} />
-              <WaterDrop size={5} bottom="18%" left="20%" rotation={-15} />
-
               {hoveredTile ? (
                 <div className="flex flex-col items-center animate-in fade-in zoom-in-90 duration-150 px-1 relative z-10 text-white">
                   <hoveredTile.icon className="w-6 h-6 sm:w-7 sm:h-7 mb-0.5 text-white stroke-[1.8] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
@@ -516,17 +464,13 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
               )}
             </button>
 
-            {/* 8 Thick Round-Corner Liquid Glass Slides with Thick Water Spread Over Them */}
-            {dialItems.map((tile, index) => {
+            {/* 8 Thick Round-Corner Liquid Glass Slides */}
+            {dialItems.map((tile) => {
               const angleRad = (tile.angle * Math.PI) / 180;
               const x = Math.round(Math.cos(angleRad) * radius);
               const y = Math.round(Math.sin(angleRad) * radius);
               const Icon = tile.icon;
               const isHovered = hoveredTile?.id === tile.id;
-
-              // Procedural Water Droplet parameters per button for realistic organic distribution
-              const drop1Size = 8 + (index % 3) * 2;
-              const drop2Size = 5 + ((index + 1) % 2) * 2;
 
               return (
                 <button
@@ -554,15 +498,6 @@ export default function CommandPalette({ onOpenMathGrapher }: CommandPaletteProp
                 >
                   {/* Thick Curved Glass Bevel Highlight */}
                   <div className="absolute top-0 left-0 right-0 h-[45%] bg-gradient-to-b from-white/30 via-white/10 to-transparent pointer-events-none rounded-t-2xl" />
-
-                  {/* Thick Water Droplets Spread on Top of the Glass Slide */}
-                  <WaterDrop size={drop1Size} top={4} right={6} rotation={index * 35} elongation={1.1} />
-                  <WaterDrop size={drop2Size} bottom={6} left={6} rotation={index * -40} elongation={0.95} />
-                  {index % 2 === 0 ? (
-                    <WaterDrop size={5} top="46%" left={5} rotation={25} />
-                  ) : (
-                    <WaterDrop size={4} bottom="30%" right={7} rotation={-15} />
-                  )}
 
                   {/* Hotkey Number Badge */}
                   <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-4 h-4 rounded-full bg-black/40 text-[9px] font-mono font-bold text-white/90 flex items-center justify-center border border-white/30 group-hover:text-white group-hover:border-white/60 z-20 shadow-sm">
