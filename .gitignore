@@ -38,3 +38,5 @@ android/.gradle/
 *.apk
 
 api/service-account.json
+
+test_screenshots/

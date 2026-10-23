@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2, Trash2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Settings, Paperclip, Loader2, Trash2, LineChart } from 'lucide-react';
+import { openMathGrapher } from '../components/math/InteractiveGrapher';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -8,7 +9,6 @@ import rehypeRaw from 'rehype-raw';
 import { simulateAiResponse, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
-import { apiUrl } from '../lib/api';
 
 type Message = {
   id: string;
@@ -48,7 +48,21 @@ export default function Tutor() {
   });
   const [_isLoadingHistory, setIsLoadingHistory] = useState(false);
   const isInitialSyncDone = useRef(false);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('prompt') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('prompt')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
   const [isTyping, setIsTyping] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{file: File, url: string} | null>(null);
@@ -94,7 +108,7 @@ export default function Tutor() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(apiUrl('/api/tutor/history'), {
+    fetch(`/api/tutor/history`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(async r => {
@@ -111,7 +125,7 @@ export default function Tutor() {
             setMessages(prev => {
               // If local has more messages than cloud (e.g. typed offline), push local to cloud
               if (prev.length > data.length) {
-                fetch(apiUrl('/api/tutor/history'), {
+                fetch(`/api/tutor/history`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ messages: prev })
@@ -125,7 +139,7 @@ export default function Tutor() {
             // Cloud has no chat yet, but user has existing local chat! Push local to cloud
             setMessages(prev => {
               if (prev.length > 1) {
-                fetch(apiUrl('/api/tutor/history'), {
+                fetch(`/api/tutor/history`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                   body: JSON.stringify({ messages: prev })
@@ -151,7 +165,7 @@ export default function Tutor() {
     if (messages.length <= 1) return;
 
     const timer = setTimeout(() => {
-      fetch(apiUrl('/api/tutor/history'), {
+      fetch(`/api/tutor/history`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ messages })
@@ -234,7 +248,7 @@ export default function Tutor() {
 
       if (token) {
         try {
-          await fetch(apiUrl('/api/tutor/history'), {
+          await fetch(`/api/tutor/history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ messages: reset, clear: true })
@@ -257,6 +271,14 @@ export default function Tutor() {
           <p className="text-muted-foreground mt-1">Your personal 24/7 teaching assistant.</p>
         </div>
         <div className="flex-1" />
+        <button 
+          onClick={() => openMathGrapher()}
+          className="flex items-center space-x-1.5 px-3 py-2 border rounded-md hover:bg-muted text-indigo-400 border-indigo-500/20 bg-indigo-500/5 transition-colors text-sm font-medium"
+          title="Open Interactive Math Grapher"
+        >
+          <LineChart className="w-4 h-4" />
+          <span className="hidden sm:inline">Math Grapher</span>
+        </button>
         <button 
           onClick={handleClearChat}
           className="p-2 border rounded-md hover:bg-muted text-muted-foreground transition-colors"

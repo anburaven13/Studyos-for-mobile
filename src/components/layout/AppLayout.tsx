@@ -1,26 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import BottomNav from './BottomNav';
 import StudyTimer from './StudyTimer';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { motion, AnimatePresence } from 'motion/react';
+import { Menu } from 'lucide-react';
 import UsernamePromptModal from './UsernamePromptModal';
+import CommandPalette from '../CommandPalette';
+import InteractiveGrapher from '../math/InteractiveGrapher';
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMathGrapherOpen, setIsMathGrapherOpen] = useState(false);
+  const [mathEquation, setMathEquation] = useState<string | undefined>();
 
   useHotkeys('ctrl+n, meta+n', (e) => {
     e.preventDefault();
     navigate('/app/notes');
   });
 
-  useHotkeys('ctrl+k, meta+k', (e) => {
-    e.preventDefault();
-    navigate('/app/tutor');
-  });
+  useEffect(() => {
+    const handleOpenMath = (e: any) => {
+      setMathEquation(e.detail?.initialEquation);
+      setIsMathGrapherOpen(true);
+    };
+    window.addEventListener('studyos:open-math-grapher', handleOpenMath);
+    return () => window.removeEventListener('studyos:open-math-grapher', handleOpenMath);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row relative selection:bg-primary/30">
@@ -36,15 +44,22 @@ export default function AppLayout() {
 
       <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       
-      <main className="flex-1 md:ml-64 min-h-screen flex flex-col relative z-0 pb-[72px] md:pb-0">
-        {/* Mobile Header (simplified for clean look since bottom nav exists) */}
+      <main className="flex-1 md:ml-64 min-h-screen flex flex-col relative z-0">
+        {/* Mobile / Split Screen Header */}
         <div className="md:hidden h-14 border-b border-white/10 flex items-center px-4 justify-between bg-black/40 backdrop-blur-3xl backdrop-saturate-200 z-30 sticky top-0 shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)} 
+            className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition-colors"
+            title="Open Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
           <span className="font-bold tracking-tight flex items-center space-x-2">
             <img src="/favicon.svg" alt="StudyOS" className="w-6 h-6 rounded-md object-contain shadow-sm border border-white/10" />
             <span>StudyOS</span>
           </span>
-          <button onClick={() => navigate('/app/settings')} className="p-2 -mr-2 text-muted-foreground hover:text-foreground">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings w-5 h-5"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <button onClick={() => navigate('/app/settings')} className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
         </div>
         
@@ -61,9 +76,14 @@ export default function AppLayout() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <BottomNav />
       <StudyTimer />
       <UsernamePromptModal />
+      <CommandPalette onOpenMathGrapher={() => setIsMathGrapherOpen(true)} />
+      <InteractiveGrapher 
+        isOpen={isMathGrapherOpen} 
+        onClose={() => setIsMathGrapherOpen(false)} 
+        initialEquation={mathEquation}
+      />
     </div>
   );
 }
