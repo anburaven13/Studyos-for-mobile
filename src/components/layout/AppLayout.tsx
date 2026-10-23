@@ -21,6 +21,11 @@ export default function AppLayout() {
     navigate('/app/notes');
   });
 
+  useHotkeys('ctrl+k, meta+k', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('studyos:open-command-palette'));
+  });
+
   useEffect(() => {
     const handleOpenMath = (e: any) => {
       setMathEquation(e.detail?.initialEquation);
