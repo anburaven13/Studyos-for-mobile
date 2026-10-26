@@ -11,6 +11,7 @@ import type { StudyCard } from '../lib/spacedRepetition';
 import { simulateAiResponse, generateFlashcards, extractTextFromDocument } from '../lib/aiService';
 import { cn } from '../lib/utils';
 import { useAuth } from '../lib/AuthContext';
+import { NotesSkeleton } from '../components/skeletons/PageSkeletons';
 
 type Note = { id: string; title: string; content: string; folder?: string; tags?: any; };
 
@@ -25,6 +26,7 @@ export default function Notes() {
   const [fsrsCards, setFsrsCards] = useState<StudyCard[]>([]);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'Saved' | 'Saving...'>('Saved');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Quiz State
   const [quizActive, setQuizActive] = useState(false);
@@ -37,7 +39,7 @@ export default function Notes() {
   const { user } = useAuth();
   const userContext = user?.class_level && user?.board ? `${user.class_level} - ${user.board}` : undefined;
 
-  const activeNote = notesList.find(n => n.id.toString() === activeNoteId.toString()) || notesList[0];
+  const activeNote = notesList.find(n => n && String(n.id) === String(activeNoteId)) || notesList[0] || { id: 'new', title: '', content: '' };
   const skipAutosaveRef = React.useRef(false);
 
   // Fetch notes on mount
@@ -48,22 +50,25 @@ export default function Notes() {
       try {
         const res = await fetch('/api/notes', { headers: { 'Authorization': `Bearer ${token}` } });
         if (res.ok) {
-          const data = await res.json();
+          const raw = await res.json();
+          const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
           if (data.length > 0) {
             setNotesList(data);
-            setActiveNoteId(data[0].id.toString());
+            setActiveNoteId(String(data[0].id));
           } else {
             createNewNote();
           }
         }
       } catch (e) {
         console.error(e);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchNotes();
     // Load saved FSRS cards
-    if (activeNoteId && activeNoteId !== 'new') {
-      const saved = loadFSRSCards(activeNoteId.toString());
+    if (activeNoteId && String(activeNoteId) !== 'new') {
+      const saved = loadFSRSCards(String(activeNoteId));
       if (saved && saved.length > 0) {
         setFsrsCards(saved);
         setFlashcards(saved.map(s => ({ front: s.front, back: s.back })));
@@ -82,7 +87,7 @@ export default function Notes() {
     return () => {
       const note = latestNoteRef.current;
       const token = localStorage.getItem('token');
-      if (note && note.id && note.id.toString() !== 'new' && note.id.toString() !== 'temp' && token) {
+      if (note && note.id && String(note.id) !== 'new' && String(note.id) !== 'temp' && token) {
         fetch(`/api/notes/${note.id}`, {
           method: 'PUT',
           headers: { 
@@ -100,7 +105,7 @@ export default function Notes() {
   useEffect(() => {
     if (!activeNote || !activeNote.id) return;
     // Skip autosave for placeholder notes
-    if (activeNote.id.toString() === 'new' || activeNote.id.toString() === 'temp') return;
+    if (String(activeNote.id) === 'new' || String(activeNote.id) === 'temp') return;
     // Skip autosave immediately after creating a new note
     if (skipAutosaveRef.current) {
       skipAutosaveRef.current = false;
@@ -131,7 +136,7 @@ export default function Notes() {
   }, [activeNote?.id, activeNote?.content, activeNote?.title, activeNote?.folder, activeNote?.tags]);
 
   const updateActiveNoteContent = (newContent: string) => {
-    setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, content: newContent } : n));
+    setNotesList(prev => prev.map(n => String(n?.id) === String(activeNoteId) ? { ...n, content: newContent } : n));
   };
 
   async function createNewNote() {
@@ -148,18 +153,20 @@ export default function Notes() {
       });
       if (res.ok) {
         const newNote = await res.json();
-        skipAutosaveRef.current = true;
-        setNotesList(prev => {
-          // Remove initial placeholder if present
-          const cleaned = prev.filter(n => n.id.toString() !== 'new' && n.id.toString() !== 'temp');
-          return [newNote, ...cleaned];
-        });
-        setActiveNoteId(newNote.id.toString());
-        setIsEditing(true);
-        setMobileView('editor');
-        setSummary('');
-        setFlashcards([]);
-        setQuizActive(false);
+        if (newNote && typeof newNote === 'object' && newNote.id) {
+          skipAutosaveRef.current = true;
+          setNotesList(prev => {
+            // Remove initial placeholder if present
+            const cleaned = prev.filter(n => n && String(n.id) !== 'new' && String(n.id) !== 'temp');
+            return [newNote, ...cleaned];
+          });
+          setActiveNoteId(String(newNote.id));
+          setIsEditing(true);
+          setMobileView('editor');
+          setSummary('');
+          setFlashcards([]);
+          setQuizActive(false);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -175,11 +182,11 @@ export default function Notes() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const updatedNotes = notesList.filter(n => n.id.toString() !== id.toString());
+      const updatedNotes = notesList.filter(n => n && String(n.id) !== String(id));
       if (updatedNotes.length > 0) {
         setNotesList(updatedNotes);
-        if (activeNoteId.toString() === id.toString()) {
-          setActiveNoteId(updatedNotes[0].id.toString());
+        if (String(activeNoteId) === String(id)) {
+          setActiveNoteId(String(updatedNotes[0]?.id));
         }
       } else {
         // Re-initialize with a new blank note if empty
@@ -208,9 +215,10 @@ export default function Notes() {
     const result = await generateFlashcards(activeNote.content, userContext);
     setFlashcards(result);
     if (result && result.length > 0) {
-      const newFsrs = result.map(fc => createStudyCard(fc.front, fc.back, activeNote.id.toString()));
+      const activeIdStr = String(activeNote?.id || 'new');
+      const newFsrs = result.map(fc => createStudyCard(fc.front, fc.back, activeIdStr));
       setFsrsCards(newFsrs);
-      saveFSRSCards(activeNote.id.toString(), newFsrs);
+      saveFSRSCards(activeIdStr, newFsrs);
     }
     setIsGenerating(false);
   };
@@ -319,6 +327,10 @@ export default function Notes() {
     return acc;
   }, {});
 
+  if (isLoading) {
+    return <NotesSkeleton />;
+  }
+
   return (
     <div className="flex-1 flex flex-col min-h-0 md:p-8 max-w-6xl mx-auto w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-hidden">
       <div className="hidden md:flex mb-6 flex-col md:flex-row items-start md:items-center justify-between gap-4 flex-shrink-0">
@@ -408,7 +420,7 @@ export default function Notes() {
                   <button 
                     key={note.id}
                     onClick={() => {
-                      setActiveNoteId(note.id.toString());
+                      setActiveNoteId(String(note.id));
                       setSummary('');
                       setFlashcards([]);
                       setQuizActive(false);
@@ -416,16 +428,16 @@ export default function Notes() {
                     }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between group",
-                      note.id.toString() === activeNoteId.toString() ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      String(note.id) === String(activeNoteId) ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
                     <span className="truncate pr-2">{note.title || 'Untitled Note'}</span>
                     <Trash 
                       className={cn(
                         "w-3.5 h-3.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive",
-                        note.id.toString() === activeNoteId.toString() && "opacity-100"
+                        String(note.id) === String(activeNoteId) && "opacity-100"
                       )} 
-                      onClick={(e) => deleteNote(note.id.toString(), e)}
+                      onClick={(e) => deleteNote(String(note.id), e)}
                     />
                   </button>
                 ))}
@@ -507,7 +519,7 @@ export default function Notes() {
                   <input 
                     type="text"
                     value={activeNote.folder || ''}
-                    onChange={(e) => setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, folder: e.target.value } : n))}
+                    onChange={(e) => setNotesList(prev => prev.map(n => String(n?.id) === String(activeNoteId) ? { ...n, folder: e.target.value } : n))}
                     className="w-full sm:w-1/3 px-3 py-1.5 text-sm font-medium bg-muted/50 border rounded-md outline-none focus:border-primary/50 transition-colors"
                     placeholder="Folder (e.g., Physics)"
                   />
@@ -516,7 +528,7 @@ export default function Notes() {
                     value={Array.isArray(activeNote.tags) ? activeNote.tags.join(', ') : (activeNote.tags || '')}
                     onChange={(e) => {
                       const tagsArray = e.target.value.split(',').map(t => t.trim()).filter(Boolean);
-                      setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, tags: tagsArray as any } : n));
+                      setNotesList(prev => prev.map(n => String(n?.id) === String(activeNoteId) ? { ...n, tags: tagsArray as any } : n));
                     }}
                     className="w-full sm:flex-1 px-3 py-1.5 text-sm bg-muted/50 border rounded-md outline-none focus:border-primary/50 transition-colors"
                     placeholder="Tags (comma separated)"
@@ -531,7 +543,7 @@ export default function Notes() {
                 <input 
                   type="text"
                   value={activeNote.title}
-                  onChange={(e) => setNotesList(prev => prev.map(n => n.id.toString() === activeNoteId.toString() ? { ...n, title: e.target.value } : n))}
+                  onChange={(e) => setNotesList(prev => prev.map(n => String(n?.id) === String(activeNoteId) ? { ...n, title: e.target.value } : n))}
                   className="w-full px-4 md:px-8 pb-4 text-2xl md:text-3xl font-bold bg-transparent outline-none placeholder:text-muted-foreground/30 flex-shrink-0"
                   placeholder="Note Title..."
                 />
@@ -660,9 +672,9 @@ export default function Notes() {
       <SpacedReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
-        noteId={activeNote.id.toString()}
-        noteTitle={activeNote.title}
-        cards={fsrsCards.length > 0 ? fsrsCards : flashcards.map(fc => createStudyCard(fc.front, fc.back, activeNote.id.toString()))}
+        noteId={String(activeNote?.id || 'new')}
+        noteTitle={activeNote?.title || 'Untitled Note'}
+        cards={fsrsCards.length > 0 ? fsrsCards : flashcards.map(fc => createStudyCard(fc.front, fc.back, String(activeNote?.id || 'new')))}
         onUpdateCards={(updated) => setFsrsCards(updated)}
       />
     </div>

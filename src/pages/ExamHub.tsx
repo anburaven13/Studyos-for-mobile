@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Target, TrendingUp, Plus, X, Trash, Upload, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { compressImageForOcr } from '../lib/aiService';
+import { ExamHubSkeleton } from '../components/skeletons/PageSkeletons';
 
 export default function ExamHub() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newExamName, setNewExamName] = useState('');
   const [newExamDate, setNewExamDate] = useState('');
@@ -13,17 +15,23 @@ export default function ExamHub() {
 
   const fetchExams = async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const res = await fetch('/api/exams', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const raw = await res.json();
+        const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
         setSubjects(data);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -34,8 +42,9 @@ export default function ExamHub() {
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
+      const safeSubjects = Array.isArray(subjects) ? subjects : [];
       // Filter for future exams and sort by date
-      const futureExams = subjects
+      const futureExams = safeSubjects
         .map(sub => ({ ...sub, dateObj: new Date(sub.date) }))
         .filter(sub => sub.dateObj > now)
         .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
@@ -188,6 +197,10 @@ export default function ExamHub() {
     if (val < 70) return 'bg-amber-500';
     return 'bg-emerald-500';
   };
+
+  if (isLoading) {
+    return <ExamHubSkeleton />;
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col relative">

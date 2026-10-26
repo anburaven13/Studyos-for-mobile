@@ -8,6 +8,7 @@ import { Menu } from 'lucide-react';
 import UsernamePromptModal from './UsernamePromptModal';
 import CommandPalette from '../CommandPalette';
 import InteractiveGrapher from '../math/InteractiveGrapher';
+import { RouteSkeletonLoader } from '../skeletons/PageSkeletons';
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -82,7 +83,9 @@ export default function AppLayout() {
             transition={{ duration: 0.25, ease: "easeInOut" }}
             className="flex-1 flex flex-col w-full h-full min-h-0"
           >
-            <Outlet />
+            <React.Suspense fallback={<RouteSkeletonLoader />}>
+              <Outlet />
+            </React.Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

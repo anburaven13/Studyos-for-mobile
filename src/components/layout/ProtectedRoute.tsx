@@ -1,17 +1,13 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { RootSkeletonLoader } from '../skeletons/PageSkeletons';
 
 export default function ProtectedRoute() {
   const { user, token, loading, requires2FA } = useAuth();
 
   if (loading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <RootSkeletonLoader />;
   }
 
   if (requires2FA) {

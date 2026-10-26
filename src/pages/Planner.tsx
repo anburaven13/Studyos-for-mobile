@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Plus, X, Trash, RefreshCw } from 'lucide-react';
-import { apiUrl } from '../lib/api';
+import { PlannerSkeleton } from '../components/skeletons/PageSkeletons';
 
 export default function Planner() {
   const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes
   const [isRunning, setIsRunning] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [newEventName, setNewEventName] = useState('');
@@ -14,17 +15,23 @@ export default function Planner() {
 
   const fetchEvents = async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      const res = await fetch(apiUrl('/api/planner/merged'), {
+      const res = await fetch('/api/planner/merged', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const raw = await res.json();
+        const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
         setEvents(data);
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +63,7 @@ export default function Planner() {
     if (!token) return;
 
     try {
-      const res = await fetch(apiUrl('/api/planner'), {
+      const res = await fetch('/api/planner', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -80,7 +87,7 @@ export default function Planner() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(apiUrl(`/api/planner/${id}`), {
+      await fetch(`/api/planner/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -92,6 +99,10 @@ export default function Planner() {
 
   const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   const seconds = (timeLeft % 60).toString().padStart(2, '0');
+
+  if (isLoading) {
+    return <PlannerSkeleton />;
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto w-full relative">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, Circle, Edit, Loader2, Sparkles, X, Wand2, FileJson, Brain, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { extractRoutineFromData } from '../lib/aiService';
-import { apiUrl } from '../lib/api';
+import { RoutinesSkeleton } from '../components/skeletons/PageSkeletons';
 
 type Block = {
   id: string;
@@ -42,16 +42,42 @@ export default function Routines() {
   useEffect(() => {
     const fetchRoutine = async () => {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        const emptySch: RoutineSchedule = {};
+        days.forEach(d => { emptySch[d] = []; });
+        setSchedule(emptySch);
+        return;
+      }
       try {
         const [schRes, progRes] = await Promise.all([
-          fetch(apiUrl('/api/routines'), { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(apiUrl(`/api/routines/progress?date=${todayStr}`), { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch('/api/routines', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`/api/routines/progress?date=${todayStr}`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        if (schRes.ok) setSchedule(await schRes.json());
-        if (progRes.ok) setProgress(await progRes.json());
+        if (schRes.ok) {
+          const rawSch = await schRes.json();
+          if (rawSch && typeof rawSch === 'object' && !Array.isArray(rawSch)) {
+            setSchedule(rawSch);
+          } else {
+            const emptySch: RoutineSchedule = {};
+            days.forEach(d => { emptySch[d] = []; });
+            setSchedule(emptySch);
+          }
+        } else {
+          const emptySch: RoutineSchedule = {};
+          days.forEach(d => { emptySch[d] = []; });
+          setSchedule(emptySch);
+        }
+        if (progRes.ok) {
+          const rawProg = await progRes.json();
+          if (rawProg && typeof rawProg === 'object' && !Array.isArray(rawProg)) {
+            setProgress(rawProg);
+          }
+        }
       } catch (e) {
         console.error(e);
+        const emptySch: RoutineSchedule = {};
+        days.forEach(d => { emptySch[d] = []; });
+        setSchedule(emptySch);
       }
     };
     fetchRoutine();
@@ -64,7 +90,7 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(apiUrl('/api/routines/progress'), {
+      await fetch('/api/routines/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ date: todayStr, progress: newProgress })
@@ -89,14 +115,14 @@ export default function Routines() {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      await fetch(apiUrl('/api/routines'), {
+      await fetch('/api/routines', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ schedule: sorted })
       });
 
       // Sync routine school/class blocks to Planner timetable
-      await fetch(apiUrl('/api/routines/sync-planner'), {
+      await fetch('/api/routines/sync-planner', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -249,7 +275,7 @@ export default function Routines() {
   };
 
   if (!schedule) {
-    return <div className="p-8 flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    return <RoutinesSkeleton />;
   }
 
   const formatTime = (time24: string) => {
@@ -270,6 +296,10 @@ export default function Routines() {
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+
+  if (!schedule) {
+    return <RoutinesSkeleton />;
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto w-full h-[calc(100vh-4rem)] flex flex-col relative">
