@@ -38,8 +38,19 @@ export default function Login() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const { syncUser } = useAuth();
+  const { user, token, loading: authLoading, syncUser } = useAuth();
   const navigate = useNavigate();
+
+  // If the user is already authenticated on PC, automatically redirect to app
+  useEffect(() => {
+    if (!authLoading && token && user) {
+      if (!user.class_level) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/app', { replace: true });
+      }
+    }
+  }, [authLoading, token, user, navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,6 +168,14 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if (authLoading && token) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-white" />
+      </div>
+    );
+  }
 
   if (show2FA) {
     return (

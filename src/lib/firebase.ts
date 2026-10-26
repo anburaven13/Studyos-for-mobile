@@ -1,5 +1,10 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence, indexedDBLocalPersistence } from "firebase/auth";
+import { 
+  getAuth, 
+  initializeAuth, 
+  browserLocalPersistence, 
+  indexedDBLocalPersistence 
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -13,14 +18,21 @@ const firebaseConfig = {
   measurementId: "G-BSCT616G4K"
 };
 
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-export const auth = getAuth(app);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Explicitly persist authentication session in localStorage (browserLocalPersistence) for Capacitor mobile webview
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn('[Firebase] browserLocalPersistence failed, attempting indexedDBLocalPersistence:', err);
-  setPersistence(auth, indexedDBLocalPersistence).catch(console.error);
-});
+// Explicit multi-tier local persistence:
+// 1. IndexedDB (primary modern web storage)
+// 2. localStorage (reliable cross-session fallback)
+// Guarantees PC browsers remember the session across tab closures, browser restarts, and reboots.
+let authInstance;
+try {
+  authInstance = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+  });
+} catch {
+  authInstance = getAuth(app);
+}
 
+export const auth = authInstance;
 export const db = getFirestore(app);
 export const storage = getStorage(app);
