@@ -1784,13 +1784,14 @@ app.post('/api/study_sessions', authenticateToken, async (req: any, res: any) =>
 // --- AI Routes ---
 
 const modelsToTry = [
-  'gemini-3.8-flash',
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
   'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-flash-latest',
+  'gemini-3.7-flash',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
   'gemma-4-31b-it',
   'gemma-4-26b-a4b-it',
   'gemma-4-4b-it'
@@ -1805,7 +1806,7 @@ async function generateWithGeminiFallback(options: {
 }) {
   let lastError;
   const models = options.specificModel && options.specificModel !== 'auto' 
-    ? [options.specificModel] 
+    ? [options.specificModel, ...modelsToTry.filter(m => m !== options.specificModel)] 
     : modelsToTry;
 
   for (const model of models) {
@@ -1829,11 +1830,20 @@ async function generateWithGeminiFallback(options: {
         finalContents.unshift({ role: 'user', parts: [{ text: `[System Instruction: ${options.systemInstruction}]` }] });
       }
 
-      const response = await geminiAi.models.generateContent({
-        model: model,
-        contents: finalContents,
-        config: config
-      });
+      // 8.5s per-model timeout so an overloaded model immediately falls back before Vercel kills the function
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Timeout: Model ${model} took longer than 6.5s`)), 6500)
+      );
+
+      const response: any = await Promise.race([
+        geminiAi.models.generateContent({
+          model: model,
+          contents: finalContents,
+          config: config
+        }),
+        timeoutPromise
+      ]);
+
       console.log(`Success with ${model}`);
       return response;
     } catch (err: any) {
@@ -2606,7 +2616,10 @@ setupExamModeRoutes(app, sql, authenticateToken, aiLimiter);
 // --- MongoDB Tutor History Routes ---
 app.get('/api/tutor/history', authenticateToken, async (req: any, res: any) => {
   try {
-    await connectMongo();
+    const conn = await connectMongo();
+    if (!conn) {
+      return res.json([]);
+    }
     const record = await TutorHistory.findOne({ userId: req.user.userId });
     if (record && Array.isArray(record.messages)) {
       res.json(record.messages);
@@ -2614,14 +2627,17 @@ app.get('/api/tutor/history', authenticateToken, async (req: any, res: any) => {
       res.json([]);
     }
   } catch (error) {
-    console.error('Fetch tutor history error:', error);
-    res.status(500).json({ error: 'Failed to fetch tutor history' });
+    console.warn('Fetch tutor history note:', error);
+    res.json([]);
   }
 });
 
 app.post('/api/tutor/history', authenticateToken, tutorHistoryLimiter, express.json({ limit: '2mb' }), async (req: any, res: any) => {
   try {
-    await connectMongo();
+    const conn = await connectMongo();
+    if (!conn) {
+      return res.json({ success: false, fallback: 'local' });
+    }
     const { messages, clear } = req.body;
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Messages array is required' });
@@ -2652,8 +2668,8 @@ app.post('/api/tutor/history', authenticateToken, tutorHistoryLimiter, express.j
     );
     res.json({ success: true });
   } catch (error) {
-    console.error('Save tutor history error:', error);
-    res.status(500).json({ error: 'Failed to save tutor history' });
+    console.warn('Save tutor history note:', error);
+    res.json({ success: false, fallback: 'local' });
   }
 });
 

@@ -37,17 +37,17 @@ export const connectMongo = async () => {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => {
       console.log('Successfully connected to MongoDB.');
       return m;
     }).catch((err) => {
-      console.error('Error connecting to MongoDB:', err);
+      console.warn('MongoDB connection note (falling back to local cache):', err.message || err);
       cached.promise = null;
-      throw err;
+      return null as any;
     });
   }
 
@@ -56,7 +56,7 @@ export const connectMongo = async () => {
     return cached.conn;
   } catch (e) {
     cached.promise = null;
-    throw e;
+    return null;
   }
 };
 
