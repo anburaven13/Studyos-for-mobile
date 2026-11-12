@@ -108,6 +108,8 @@ export const initializeDb = async () => {
           start_time TEXT NOT NULL,
           end_time TEXT NOT NULL,
           source TEXT DEFAULT 'manual',
+          date VARCHAR(10),
+          is_recurring BOOLEAN DEFAULT false,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `;
@@ -117,6 +119,12 @@ export const initializeDb = async () => {
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='planner_events' AND column_name='source') THEN
                 ALTER TABLE planner_events ADD COLUMN source TEXT DEFAULT 'manual';
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='planner_events' AND column_name='date') THEN
+                ALTER TABLE planner_events ADD COLUMN date VARCHAR(10);
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='planner_events' AND column_name='is_recurring') THEN
+                ALTER TABLE planner_events ADD COLUMN is_recurring BOOLEAN DEFAULT false;
             END IF;
         END
         $$;

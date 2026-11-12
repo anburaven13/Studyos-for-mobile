@@ -101,7 +101,7 @@ export default function Dashboard() {
         const [examsRes, homeworkRes, plannerRes, analyticsRes] = await Promise.all([
           fetch('/api/exams', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/homework', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/planner', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/planner/merged', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/analytics', { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 

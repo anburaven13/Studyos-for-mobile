@@ -184,6 +184,8 @@ const plannerSchema = z.object({
   name: z.string().min(1).max(255),
   start_time: z.string().min(1).max(20),
   end_time: z.string().min(1).max(20),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD format').optional().nullable(),
+  is_recurring: z.boolean().optional().default(false),
 });
 
 const aiChatSchema = z.object({
@@ -1159,7 +1161,18 @@ app.delete('/api/homework/:id', authenticateToken, async (req: any, res: any) =>
 // --- Planner Routes ---
 app.get('/api/planner', authenticateToken, async (req: any, res: any) => {
   try {
-    const events = await sql`SELECT * FROM planner_events WHERE user_id = ${req.user.userId} ORDER BY start_time ASC`;
+    const filterDate = typeof req.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : null;
+    let events;
+    if (filterDate) {
+      events = await sql`
+        SELECT * FROM planner_events 
+        WHERE user_id = ${req.user.userId} 
+          AND (date = ${filterDate} OR (is_recurring = true AND (date IS NULL OR date = ${filterDate})) OR (date IS NULL AND is_recurring = false))
+        ORDER BY start_time ASC
+      `;
+    } else {
+      events = await sql`SELECT * FROM planner_events WHERE user_id = ${req.user.userId} ORDER BY start_time ASC`;
+    }
     res.json(events);
   } catch (error) {
     console.error('Fetch planner error:', error);
@@ -1171,10 +1184,10 @@ app.post('/api/planner', authenticateToken, async (req: any, res: any) => {
   try {
     const parsed = plannerSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message });
-    const { name, start_time, end_time } = parsed.data;
+    const { name, start_time, end_time, date, is_recurring } = parsed.data;
     const result = await sql`
-      INSERT INTO planner_events (user_id, name, start_time, end_time) 
-      VALUES (${req.user.userId}, ${name}, ${start_time}, ${end_time})
+      INSERT INTO planner_events (user_id, name, start_time, end_time, date, is_recurring, source) 
+      VALUES (${req.user.userId}, ${name}, ${start_time}, ${end_time}, ${date || null}, ${is_recurring ?? false}, 'manual')
       RETURNING *
     `;
     res.status(201).json(result[0]);
@@ -1198,22 +1211,44 @@ app.delete('/api/planner/:id', authenticateToken, async (req: any, res: any) => 
 app.get('/api/planner/merged', authenticateToken, async (req: any, res: any) => {
   try {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayName = days[new Date().getDay()];
+    
+    // Determine target date (supports ?date=YYYY-MM-DD query param, defaults to today)
+    const targetDate = typeof req.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+      ? req.query.date
+      : new Date().toISOString().split('T')[0];
 
-    // Fetch manual planner events
-    const plannerEvents = await sql`SELECT * FROM planner_events WHERE user_id = ${req.user.userId} AND source = 'manual' ORDER BY start_time ASC`;
+    const [y, m, d] = targetDate.split('-').map(Number);
+    const targetDayIndex = new Date(Date.UTC(y, m - 1, d, 12, 0, 0)).getUTCDay();
+    const dayName = days[targetDayIndex];
 
-    // Fetch today's routine blocks
+    // Fetch manual and AI planner events for targetDate:
+    // 1. One-off events scheduled specifically for targetDate
+    // 2. Weekly recurring events
+    // 3. Legacy events where date is null
+    const plannerEvents = await sql`
+      SELECT * FROM planner_events 
+      WHERE user_id = ${req.user.userId} 
+        AND source != 'routine'
+        AND (
+          date = ${targetDate} 
+          OR (is_recurring = true)
+          OR (date IS NULL)
+        )
+      ORDER BY start_time ASC
+    `;
+
+    // Fetch target day's routine blocks
     const routines = await sql`SELECT schedule FROM routines WHERE user_id = ${req.user.userId}`;
     let routineBlocks: any[] = [];
-    if (routines.length > 0 && routines[0].schedule && routines[0].schedule[todayName]) {
-      routineBlocks = routines[0].schedule[todayName].map((block: any) => ({
+    if (routines.length > 0 && routines[0].schedule && routines[0].schedule[dayName]) {
+      routineBlocks = routines[0].schedule[dayName].map((block: any) => ({
         id: `routine-${block.id}`,
         name: block.title,
         start_time: block.start,
         end_time: block.end,
         source: 'routine',
-        routine_type: block.type
+        routine_type: block.type,
+        date: targetDate
       }));
     }
 
@@ -1899,7 +1934,11 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
       const sanitizedCustom = customSystemPrompt.slice(0, 25000);
       baseSystemPrompt = `${IMMUTABLE_GUARDRAIL}\n\n${sanitizedCustom}`;
     } else {
-      baseSystemPrompt = `${IMMUTABLE_GUARDRAIL}\n\nYou are a highly capable, versatile AI academic assistant and tutor. You can explain concepts, solve homework problems, test knowledge, and organize schedules. You have direct database tools to view and update the user's weekly routine schedule, exams, homework, planner events, study sessions, and notes. When the user asks you to split, rebalance, adjust, or edit their routine/timetable, ALWAYS use 'get_routine' to read their active routine and 'update_routine' to save the split/edited blocks directly into their database so the changes show immediately on the website. Always format responses cleanly with standard Markdown and LaTeX ($...$ or $$...$$). Do not output raw HTML tags like <br> or <p>; use Markdown newlines and paragraph breaks instead.`;
+      const now = new Date();
+      const currentDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const currentDateStr = now.toISOString().split('T')[0];
+      const currentDayName = currentDays[now.getDay()];
+      baseSystemPrompt = `${IMMUTABLE_GUARDRAIL}\n\nYou are a highly capable, versatile AI academic assistant and tutor. Today is ${currentDayName}, ${currentDateStr}. You can explain concepts, solve homework problems, test knowledge, and organize schedules. You have direct database tools to view and update the user's weekly routine schedule, exams, homework, planner events, study sessions, and notes. When scheduling a one-off class or tuition for a specific day (e.g. "tuition this Friday"), calculate the exact YYYY-MM-DD date and call 'create_planner_event' with name, start_time, end_time, date, and is_recurring: false. When the user asks you to split, rebalance, adjust, or edit their routine/timetable, ALWAYS use 'get_routine' to read their active routine and 'update_routine' to save the split/edited blocks directly into their database so the changes show immediately on the website. Always format responses cleanly with standard Markdown and LaTeX ($...$ or $$...$$). Do not output raw HTML tags like <br> or <p>; use Markdown newlines and paragraph breaks instead.`;
     }
 
     const fullSystemPrompt = userContext 
@@ -2029,13 +2068,15 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
         },
         {
           name: "create_planner_event",
-          description: "Adds an event to the user's planner/schedule",
+          description: "Adds an event to the user's planner/schedule. For one-off classes or tuitions (e.g. tuition this Friday), provide the specific date in YYYY-MM-DD format.",
           parameters: {
             type: "OBJECT",
             properties: {
-              name: { type: "STRING", description: "Name of the event" },
-              start_time: { type: "STRING", description: "HH:MM format in 24hr time" },
-              end_time: { type: "STRING", description: "HH:MM format in 24hr time" }
+              name: { type: "STRING", description: "Name of the event (e.g. 'Physics Tuition')" },
+              start_time: { type: "STRING", description: "HH:MM format in 24hr time (e.g. '16:00')" },
+              end_time: { type: "STRING", description: "HH:MM format in 24hr time (e.g. '17:00')" },
+              date: { type: "STRING", description: "Optional date of event in YYYY-MM-DD format. For 'this Friday' or 'tomorrow', calculate and supply the exact date." },
+              is_recurring: { type: "BOOLEAN", description: "Set to false for one-time events (default), or true if repeating weekly." }
             },
             required: ["name", "start_time", "end_time"]
           }
@@ -2190,9 +2231,14 @@ app.post('/api/ai/chat', authenticateToken, aiLimiter, async (req: any, res: any
               functionResponse: { name: toolCall.name, response: { message: "Homework added successfully." } }
             });
           } else if (toolCall.name === 'create_planner_event') {
-            await sql`INSERT INTO planner_events (user_id, name, start_time, end_time, source) VALUES (${req.user.userId}, ${args.name as string}, ${args.start_time as string}, ${args.end_time as string}, 'ai')`;
+            const eventDate = (args.date as string) || null;
+            const isRecurring = Boolean(args.is_recurring);
+            await sql`
+              INSERT INTO planner_events (user_id, name, start_time, end_time, source, date, is_recurring) 
+              VALUES (${req.user.userId}, ${args.name as string}, ${args.start_time as string}, ${args.end_time as string}, 'ai', ${eventDate}, ${isRecurring})
+            `;
             functionResponses.push({
-              functionResponse: { name: toolCall.name, response: { message: "Planner event added successfully." } }
+              functionResponse: { name: toolCall.name, response: { message: `Planner event '${args.name}' added successfully${eventDate ? ` for ${eventDate}` : ''}.` } }
             });
           } else if (toolCall.name === 'get_homework') {
             const hw = await sql`SELECT id, title, subject, due_date FROM homework WHERE user_id = ${req.user.userId} AND completed = false ORDER BY due_date ASC LIMIT 10`;
